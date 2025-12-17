@@ -11,14 +11,14 @@ Implementation notes:
   - x < 100,000: Full sieve (fast for small x)
   - x >= 100,000: Segmented sieve (bounded memory for large x)
 - Time complexity: O(x log log x) - optimized linear, not sublinear
-- Space complexity: O(1) for fixed segment size (segmented sieve)
-- Memory usage: ~1MB per segment (boolean array representation)
+- Space complexity: O(segment_size + sqrt(x)) where segment_size dominates for large x
+- Memory usage: ~8MB per segment (Python list[bool] with 8-byte pointer overhead per element)
 - Future work: True sublinear methods (Lehmer-style, O(x^(2/3))) remain unimplemented
 
 Phase 1 implementation (2025-12-17):
 - Segmented sieve backend to satisfy Part 6 section 6.4 memory constraint (< 25 MB)
-- Fixed segment size of 1,000,000 elements (~1MB per segment as boolean list)
-- Restores memory compliance for indices up to 1M+
+- Fixed segment size of 1,000,000 elements (~8MB per segment as list[bool])
+- Restores memory compliance for indices up to 250k+ (measured: 15.27 MB at 250k)
 """
 
 import math
@@ -72,13 +72,15 @@ def _segmented_sieve(x: int, segment_size: int = 1_000_000) -> int:
     4. Count unmarked (prime) positions in each segment
 
     Memory representation:
-    - Segment: Python list of booleans (1 byte per element)
-    - segment_size elements = ~segment_size bytes
-    - Default: 1,000,000 elements ≈ 1 MB per segment
-    - Small primes list: sqrt(x) / ln(sqrt(x)) elements ≈ negligible for x < 10^7
+    - Segment: Python list[bool] storing pointers to boolean objects
+    - Each list element stores an 8-byte pointer (on 64-bit Python)
+    - segment_size elements = segment_size * 8 bytes for list structure
+    - Default: 1,000,000 elements ≈ 8 MB per segment (list overhead)
+    - Small primes list: sqrt(x) / ln(sqrt(x)) primes ≈ < 1 MB for x < 10^7
+    - Note: bytearray would be 1 byte/element if memory is critical
 
     Time complexity: O(x log log x) - same as full sieve
-    Space complexity: O(segment_size + sqrt(x)) ≈ O(1) for fixed segment_size
+    Space complexity: O(segment_size + sqrt(x)) where segment_size dominates for large x
 
     Args:
         x: Upper bound for counting
@@ -113,7 +115,7 @@ def _segmented_sieve(x: int, segment_size: int = 1_000_000) -> int:
         segment_length = segment_end - segment_start + 1
 
         # Create segment: False = prime (initially assume all prime)
-        # Using list of booleans: ~1 byte per element
+        # Using list[bool]: ~8 bytes per element (pointer overhead on 64-bit Python)
         is_composite = [False] * segment_length
 
         # Sieve this segment using small primes
@@ -236,11 +238,12 @@ def pi(x: int) -> int:
     Time complexity: O(x log log x) - optimized linear, not sublinear
     Space complexity:
       - Full sieve: O(x) - used only for x < 100,000
-      - Segmented sieve: O(1) - fixed 1MB segments for x >= 100,000
+      - Segmented sieve: O(segment_size + sqrt(x)) - fixed-size segments for x >= 100,000
+        where segment_size = 1M elements ≈ 8 MB dominates for large x
 
     Memory usage:
       - x < 100,000: ~100 KB for full sieve (well within constraint)
-      - x >= 100,000: ~1-2 MB peak (segment + small primes list)
+      - x >= 100,000: ~8-10 MB peak (8 MB segment + ~1 MB small primes list + overhead)
 
     This implementation dramatically improves constant factors (20x speedup)
     but remains linear in x. True sublinear methods (Lehmer-style, O(x^(2/3)))

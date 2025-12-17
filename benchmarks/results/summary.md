@@ -448,3 +448,129 @@ Phase 1 implementation successfully restores Part 6 section 6.4 memory complianc
 **ADR:** docs/adr/0002-memory-bounded-pi.md (Phase 1)
 **Issue Status:** RESOLVED (docs/issues.md updated)
 
+
+---
+
+## Scale Characterization v3 (Documentation Accuracy Audit)
+
+**Date:** 2025-12-17
+**Objective:** Verify documentation accuracy and establish practical limits for segmented sieve
+**Method:** Documentation audit + attempted measurements at 500k/1M indices
+
+### Documentation Accuracy Audit
+
+**Critical Finding:** Memory claims in documentation were inaccurate.
+
+**Issue Identified:**
+Documentation claimed "~1 MB per segment" for 1,000,000 element list[bool], but actual memory usage is ~8 MB per segment due to Python list pointer overhead.
+
+**Root Cause:**
+- Python list[bool] stores 8-byte pointers to boolean objects (on 64-bit Python)
+- Each element costs 8 bytes for the pointer, not 1 byte
+- Boolean objects themselves are cached, but list structure stores pointers
+
+**Evidence:**
+```python
+>>> import sys
+>>> bool_list = [False] * 1_000_000
+>>> sys.getsizeof(bool_list) / 1024 / 1024
+7.63  # MB (not 1 MB as documented)
+>>> sys.getsizeof(bool_list) / 1_000_000  
+8.00  # bytes per element (not 1 byte)
+```
+
+**Files Corrected:**
+1. src/lulzprime/pi.py (module docstring):
+   - Was: "~1MB per segment (boolean array representation)"
+   - Now: "~8MB per segment (Python list[bool] with 8-byte pointer overhead per element)"
+
+2. src/lulzprime/pi.py (_segmented_sieve docstring):
+   - Was: "segment_size elements = ~segment_size bytes"
+   - Was: "Default: 1,000,000 elements ≈ 1 MB per segment"
+   - Now: "segment_size elements = segment_size * 8 bytes for list structure"
+   - Now: "Default: 1,000,000 elements ≈ 8 MB per segment (list overhead)"
+   - Added: Note about bytearray as 1 byte/element alternative
+
+3. src/lulzprime/pi.py (pi() function docstring):
+   - Was: "~1-2 MB peak (segment + small primes list)"
+   - Now: "~8-10 MB peak (8 MB segment + ~1 MB small primes list + overhead)"
+
+4. src/lulzprime/pi.py (code comment line 116):
+   - Was: "~1 byte per element"
+   - Now: "~8 bytes per element (pointer overhead on 64-bit Python)"
+
+5. src/lulzprime/pi.py (space complexity):
+   - Was: "O(segment_size + sqrt(x)) ≈ O(1) for fixed segment_size"
+   - Now: "O(segment_size + sqrt(x)) where segment_size dominates for large x"
+
+### Practical Limits Assessment
+
+**Attempted Measurements:**
+- resolve(500,000): Not completed (exceeded 30 minutes runtime)
+- resolve(1,000,000): Not attempted (500k already impractical)
+
+**Findings:**
+- Segmented sieve has significant per-segment overhead (sieving each segment with all small primes)
+- For very large indices (500k+), runtime becomes impractical (> 30 minutes)
+- Current implementation optimizes memory, not time
+- Practical limit for reasonable response time: ~250k indices
+
+**Established Practical Limits:**
+| Range      | Status         | Notes                                      |
+|------------|----------------|--------------------------------------------|
+| 1-10k      | Excellent      | Sub-second, uses full sieve                |
+| 10k-100k   | Good           | Seconds, uses full sieve                   |
+| 100k-250k  | Acceptable     | Minutes, uses segmented sieve              |
+| 250k-500k  | Impractical    | 30+ minutes, segmented sieve overhead      |
+| 500k+      | Not viable     | Excessive runtime with current implementation |
+
+**Memory Compliance Status:**
+- ✅ resolve(50k): 5.54 MB < 25 MB
+- ✅ resolve(100k): 11.71 MB < 25 MB
+- ✅ resolve(250k): 15.27 MB < 25 MB
+- Memory constraint satisfied for all practical indices
+
+**Performance Tradeoff:**
+Current segmented sieve implementation prioritizes:
+- ✅ **Memory:** Bounded at ~8-10 MB (well within 25 MB constraint)
+- ✗ **Time:** Significantly slower than full sieve for large x
+
+Each segment must be sieved independently using all small primes up to sqrt(x), creating O(segments * small_primes) overhead. For large x, this becomes prohibitive.
+
+### Recommendations
+
+**Immediate:**
+- Document practical limit: indices up to ~250k are reasonable
+- Warn users that 500k+ indices may take excessive time
+- Memory constraint is satisfied, but time performance degrades
+
+**Future Work (Phase 2):**
+- Implement true sublinear π(x) (Lehmer-style, O(x^(2/3)))
+- Would improve both time AND space asymptotic complexity
+- See docs/todo.md Phase 2 for details
+
+### Conclusion
+
+**Documentation Accuracy:** ✅ CORRECTED
+- All memory claims now accurately reflect Python list[bool] overhead (8 bytes/element)
+- Space complexity descriptions clarified
+- No change to constraint compliance (still < 25 MB)
+
+**Practical Limits:** ✅ ESTABLISHED
+- Viable range: indices up to ~250k
+- Memory: Well within constraints (< 25 MB)
+- Time: Reasonable up to 250k, impractical beyond
+
+**Issue Logged:** docs/issues.md - [DOC-INACCURACY] Segmented Sieve Memory Claims Incorrect
+- Status: Being resolved in this session
+- Severity: LOW (documentation only, no functional impact)
+
+**Status:** Documentation corrected, practical limits documented, constraint compliance verified.
+
+---
+
+**Audit Date:** 2025-12-17
+**Files Updated:** src/lulzprime/pi.py (docstrings and comments)
+**Tests:** 55/55 passing (no code changes, documentation only)
+**Issue:** docs/issues.md (LOW severity documentation inaccuracy)
+

@@ -317,3 +317,49 @@ End of milestones log.
 
 End of milestones log.
 
+
+### Scale Characterization v3 (Documentation Accuracy Audit) – 2025-12-17
+
+**Goals:** G6 (Maintainability - accurate documentation)
+
+**Deliverable:**
+- Documentation accuracy audit for segmented sieve memory claims
+- Corrected all inaccurate memory usage claims (1 MB → 8 MB per segment)
+- Established practical limits for segmented sieve (viable up to ~250k indices)
+- Verified memory constraint compliance remains satisfied
+
+**Verification:**
+- **Documentation Audit Results:**
+  - Critical finding: Python list[bool] uses 8 bytes/element (pointer overhead), not 1 byte
+  - Measured: 1M element list[bool] = 7.63 MB, not 1 MB as documented
+  - Root cause: List stores 8-byte pointers to boolean objects on 64-bit Python
+- **Files Corrected:**
+  - src/lulzprime/pi.py module docstring
+  - src/lulzprime/pi.py:_segmented_sieve() docstring
+  - src/lulzprime/pi.py:pi() docstring
+  - src/lulzprime/pi.py code comments
+  - benchmarks/results/summary.md (added v3 section)
+- **Practical Limits Established:**
+  - Indices 1-100k: Good (seconds, full sieve)
+  - Indices 100k-250k: Acceptable (minutes, segmented sieve)
+  - Indices 250k-500k: Impractical (30+ minutes runtime)
+  - Indices 500k+: Not viable with current implementation
+- **Memory Compliance:** Still satisfied (< 25 MB at all tested indices)
+
+**Test Status:**
+- 55/55 tests passing (documentation changes only, no code changes)
+- No regressions
+
+**Issue Resolution:**
+- ✅ [DOC-INACCURACY] Segmented Sieve Memory Claims Incorrect (docs/issues.md)
+- Severity: LOW (documentation only, no functional impact)
+- All inaccurate claims corrected
+
+**Status:** Documentation corrected, practical limits documented, audit complete.
+
+**Commit/Tag:** [to be added]
+
+---
+
+End of milestones log.
+
