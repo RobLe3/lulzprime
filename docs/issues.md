@@ -110,6 +110,42 @@ The Sieve of Eratosthenes creates an array of size x, using approximately x/8 by
 - benchmarks/bench_scale_characterization.py (run date: 2025-12-17)
 - Full results documented in benchmarks/results/summary.md
 
+**Proposed Remediation:**
+
+A comprehensive Architecture Decision Record has been created to evaluate remediation options:
+- **ADR:** docs/adr/0002-memory-bounded-pi.md
+- **Recommended approach:** Hybrid (Option C)
+  - **Phase 1 (Immediate):** Implement segmented sieve with bounded memory (HIGH priority)
+  - **Phase 2 (Future):** Implement true sublinear Lehmer-style π(x) (MEDIUM priority)
+
+**Phase 1 Details:**
+- Implement segmented sieve with fixed 1M element window (~125 KB memory)
+- Threshold-based dispatch: simple sieve for x < 100k, segmented for x ≥ 100k
+- Expected memory at p_250000: ~150 KB (down from 42.71 MB)
+- Time complexity: O(x log log x) (same asymptotic as current)
+- Space complexity: O(1) for fixed segment size
+- Implementation effort: 2-4 hours
+- See docs/todo.md for dependency-ordered implementation steps
+
+**Phase 2 Details:**
+- Implement true sublinear π(x) (Meissel-Lehmer or Deleglise-Rivat)
+- Time complexity: O(x^(2/3)) - true sublinear
+- Space complexity: O(x^(1/3)) - sublinear memory
+- Dependency: Requires Phase 1 completion for validation baseline
+- Implementation effort: 20-40 hours
+- Priority: MEDIUM (optimization, not constraint violation fix)
+
+**Rationale:**
+- Phase 1 restores < 25 MB compliance immediately (low risk, fast remediation)
+- Phase 2 achieves Part 6 section 6.3 asymptotic target (high value, longer timeline)
+- Incremental approach allows independent validation at each phase
+- Segmented sieve serves as correctness baseline for Lehmer validation
+
+**References:**
+- ADR: docs/adr/0002-memory-bounded-pi.md
+- Implementation plan: docs/todo.md (Phase 1: Implement Segmented Sieve π(x))
+- Future work: docs/todo.md (Phase 2: Implement True Sublinear π(x) Backend)
+
 ---
 
 ## Resolved Issues
