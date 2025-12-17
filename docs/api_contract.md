@@ -431,6 +431,40 @@ count = pi_parallel(1_000_000, workers=4)  # ~3-5x faster than pi(1_000_000)
 - Security-critical applications: same as `pi()`, not crypto-safe
 - True sublinear complexity: still O(x log log x), just parallelized
 
+**Advanced: Wiring pi_parallel into resolution pipeline**
+
+For advanced users who want to use parallel π(x) in the resolution workflow, you can use the internal API with dependency injection:
+
+```python
+from lulzprime.lookup import resolve_internal_with_pi
+from lulzprime.pi import pi_parallel
+
+# Example 1: Direct resolution with parallel π(x)
+# Note: This is internal API, use at your own risk
+index = 500_000
+prime = resolve_internal_with_pi(index, pi_parallel)  # Uses parallel π(x)
+
+# Example 2: Manual batch with parallel π(x)
+# Note: resolve_many() does not currently expose pi_fn parameter
+# Advanced users can implement custom batch logic:
+from lulzprime.pi import pi_parallel, _simple_sieve
+import math
+
+def resolve_many_parallel(indices: list[int], workers: int = 4) -> list[int]:
+    """Custom batch resolution using pi_parallel."""
+    # Create cached version of pi_parallel
+    def cached_pi_parallel(x: int) -> int:
+        return pi_parallel(x, workers=workers)
+
+    # Use dependency injection for each index
+    return [resolve_internal_with_pi(idx, cached_pi_parallel) for idx in indices]
+
+# Usage
+primes = resolve_many_parallel([100_000, 200_000, 300_000], workers=4)
+```
+
+**Note:** The above examples use internal APIs (`resolve_internal_with_pi`) which are subject to change. Future enhancement may expose `pi_fn` parameter in public `resolve_many()` API.
+
 **See also:**
 - docs/adr/0004-parallel-pi.md for implementation details
 - Part 6 section 6.3: Phase 2 sublinear π(x) remains future work

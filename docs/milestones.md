@@ -859,5 +859,121 @@ Note: Speedup is sublinear due to overhead (process creation, small primes gener
 
 ---
 
+### Parallel π(x) Micro-Benchmark Evidence – 2025-12-17
+
+**Goals:** Measurement, Transparency, Policy Compliance
+
+**Deliverable:**
+- Converted pi_parallel performance claims from estimates into measured evidence
+- Enforced benchmark_policy.md time caps (30s per measurement)
+- Created policy-compliant micro-benchmark script
+- Generated measured speedup data
+
+**Objective:**
+Replace projected speedups in ADR 0004 with actual measured data, while staying within benchmark policy time caps to avoid accidental long runs.
+
+**Implementation:**
+
+1. **New Benchmark Script:** `benchmarks/bench_pi_parallel_micro.py`
+   - Measures wall-time for sequential pi() vs parallel pi_parallel(x, workers=k)
+   - Tests x in {200k, 500k, 1M} with workers in {2, 4, 8}
+   - Enforces 30s time cap per measurement (configurable via --max-seconds)
+   - Outputs markdown table to benchmarks/results/pi_parallel_micro.md
+   - Policy compliant: uses same timeout enforcement as bench_scale_characterization.py
+
+2. **Documentation Enhancement:** `docs/api_contract.md`
+   - Added "Advanced: Wiring pi_parallel into resolution pipeline" section
+   - Shows how to use resolve_internal_with_pi(index, pi_parallel)
+   - Provides example custom batch function using pi_parallel
+   - Notes internal API caveat and future enhancement possibility
+
+**Measured Results (2025-12-17):**
+
+All measurements completed within 30s time cap per measurement.
+
+| x | Mode | Time (s) | Speedup vs Sequential |
+|---|------|----------|-----------------------|
+| 200,000 | sequential | 0.03 | 1.00x (baseline) |
+| 200,000 | w=2 | 0.03 | 0.95x (overhead) |
+| 200,000 | w=4 | 0.03 | 1.01x (overhead) |
+| 200,000 | w=8 | 0.03 | 0.98x (overhead) |
+| 500,000 | sequential | 0.09 | 1.00x (baseline) |
+| 500,000 | w=2 | 0.09 | 0.98x (overhead) |
+| 500,000 | w=4 | 0.09 | 1.00x (overhead) |
+| 500,000 | w=8 | 0.09 | 1.00x (overhead) |
+| 1,000,000 | sequential | 0.19 | 1.00x (baseline) |
+| 1,000,000 | w=2 | 0.33 | 0.58x (slowdown) |
+| 1,000,000 | w=4 | 0.32 | 0.60x (slowdown) |
+| 1,000,000 | w=8 | 0.56 | 0.34x (slowdown) |
+
+**Average measured speedup:** 0.83x (parallel is slower due to overhead)
+
+**Key Findings:**
+
+1. **Overhead Dominates at Measured Scales:**
+   - For x in {200k, 500k, 1M}, multiprocessing overhead exceeds benefit
+   - Process creation + serialization cost > parallel computation gain
+   - Sequential pi() is already very fast at these scales (0.03s - 0.19s)
+
+2. **Threshold Validation:**
+   - Current threshold (1M) is appropriate for avoiding overhead
+   - Even at 1M, parallel shows slowdown (0.58x with 2 workers)
+   - Confirms that parallel benefit only applies to much larger x (>> 1M)
+
+3. **Projected vs Measured:**
+   - ADR 0004 projected 1.8-5.5x speedup for 500k-1M
+   - **Measured:** 0.58-1.01x (overhead dominates)
+   - Discrepancy due to underestimating overhead at these scales
+
+4. **When Parallel Would Help:**
+   - For x >> 1M (e.g., 10M, 100M) where computation >> overhead
+   - For very slow sequential runs (30+ minutes) where overhead is negligible
+   - Current measured data does NOT support parallel use at 200k-1M
+
+**Corrected Performance Guidance:**
+
+| x Range | Sequential Time | Parallel Benefit | Recommendation |
+|---------|----------------|------------------|----------------|
+| < 200k | < 0.03s | No (overhead > gain) | Use sequential pi() |
+| 200k-1M | 0.03-0.19s | No (overhead dominates) | Use sequential pi() |
+| 1M-10M | 0.2-2s (est.) | Unknown (not measured) | Threshold blocks parallel |
+| >> 10M | Minutes (est.) | Likely (computation >> overhead) | Parallel may help |
+
+**Updated ADR 0004 Status:**
+- Measured evidence shows overhead dominates at 200k-1M
+- Projected speedups were over-optimistic for these scales
+- Parallel π(x) remains useful for exploration but NOT a performance win at measured scales
+- Benefit threshold likely much higher than 1M (possibly 10M+)
+
+**Impact:**
+- **Transparency improved:** Measured data replaces estimates
+- **Policy compliant:** All runs within 30s cap (no stress benchmarks needed)
+- **Threshold validated:** 1M threshold correctly avoids overhead
+- **User guidance clarified:** Parallel not beneficial for typical use cases
+
+**Files Modified:**
+- benchmarks/bench_pi_parallel_micro.py: New benchmark script
+- benchmarks/results/pi_parallel_micro.md: Generated measurement report
+- docs/api_contract.md: Added advanced wiring examples
+- docs/milestones.md: This entry
+
+**Test Results:** 108/108 passing (no regressions)
+
+**Benchmark Execution Time:** < 3 seconds total (all measurements well within caps)
+
+**Status:** Measured evidence documented, performance claims grounded in reality
+
+**Commit/Tag:** [pending]
+
+**References:**
+- Benchmark output: benchmarks/results/pi_parallel_micro.md
+- ADR 0004: docs/adr/0004-parallel-pi.md (projected speedups now known to be over-optimistic)
+- Benchmark policy: docs/benchmark_policy.md (time caps enforced)
+
+**Conclusion:**
+Parallel π(x) implementation is correct and deterministic, but multiprocessing overhead dominates at practical scales (200k-1M). Benefit only applies to much larger x (>> 1M) where sequential is already very slow. Current threshold design is validated by measurements.
+
+---
+
 End of milestones log.
 
