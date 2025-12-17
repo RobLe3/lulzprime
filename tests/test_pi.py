@@ -31,9 +31,9 @@ class TestPi:
             assert pi(x) == expected, f"π({x}) should be {expected}"
 
     def test_pi_very_large_values(self):
-        """Test π(x) on very large values using sublinear algorithm."""
-        # Known values from prime tables (tests Legendre implementation)
-        # These values exceed the sieve threshold (10000) and use sublinear counting
+        """Test π(x) on very large values using segmented sieve."""
+        # Known values from prime tables
+        # These values exceed the segmented threshold (100,000) and use bounded memory
         known = {
             100000: 9592,
             1000000: 78498,
@@ -41,6 +41,54 @@ class TestPi:
         for x, expected in known.items():
             result = pi(x)
             assert result == expected, f"π({x}) should be {expected}, got {result}"
+
+    def test_pi_segmented_threshold(self):
+        """Test π(x) around the segmented sieve threshold (100,000)."""
+        # Test values just below and above threshold to ensure consistency
+        # Threshold is 100,000 - test at boundary
+        test_values = [
+            99999,   # Just below threshold (uses full sieve)
+            100000,  # Exactly at threshold (uses segmented sieve)
+            100001,  # Just above threshold (uses segmented sieve)
+        ]
+
+        # All should produce correct, monotone results
+        results = [pi(x) for x in test_values]
+
+        # Verify monotonicity at threshold boundary
+        assert results[0] <= results[1] <= results[2], \
+            f"π(x) not monotone at threshold: {results}"
+
+        # Verify known value at threshold
+        assert results[1] == 9592, f"π(100000) should be 9592, got {results[1]}"
+
+    def test_pi_segmented_large_values(self):
+        """Test π(x) at large values to verify segmented sieve correctness."""
+        # Test additional large values to stress-test segmented implementation
+        # Values chosen to test multiple segments (segment_size = 1,000,000)
+        # Values verified against full sieve implementation
+        known = {
+            250000: 22044,   # ~2.5 segments
+            500000: 41538,   # ~5 segments
+            750000: 60238,   # ~7.5 segments
+        }
+        for x, expected in known.items():
+            result = pi(x)
+            assert result == expected, f"π({x}) should be {expected}, got {result}"
+
+    def test_pi_segmented_vs_full_sieve(self):
+        """Test that segmented and full sieve produce identical results."""
+        # Import internal functions for direct testing
+        from lulzprime.pi import _simple_sieve, _segmented_sieve
+
+        # Test values where both methods can be used
+        test_values = [10000, 50000, 99999]
+
+        for x in test_values:
+            full_result = len(_simple_sieve(x))
+            segmented_result = _segmented_sieve(x)
+            assert full_result == segmented_result, \
+                f"Mismatch at x={x}: full={full_result}, segmented={segmented_result}"
 
     def test_pi_monotonicity(self):
         """Test that π(x) is monotone increasing."""

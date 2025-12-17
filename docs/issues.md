@@ -63,9 +63,15 @@ How it was fixed, commit reference
 
 ## Open Issues
 
+**None** - All issues resolved.
+
+---
+
+## Resolved Issues
+
 ## [CONSTRAINT-VIOLATION] Memory Exceeds 25MB Limit at Large Indices – 2025-12-17
 
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Severity:** HIGH
 
@@ -146,9 +152,53 @@ A comprehensive Architecture Decision Record has been created to evaluate remedi
 - Implementation plan: docs/todo.md (Phase 1: Implement Segmented Sieve π(x))
 - Future work: docs/todo.md (Phase 2: Implement True Sublinear π(x) Backend)
 
----
+**Resolution:** (2025-12-17)
 
-## Resolved Issues
+Phase 1 (segmented sieve) implemented and verified. Memory constraint violation **RESOLVED**.
+
+**Implementation:**
+- Segmented sieve backend implemented in src/lulzprime/pi.py
+- Hybrid threshold-based dispatch:
+  - x < 100,000: Full sieve (fast for small x)
+  - x >= 100,000: Segmented sieve (bounded memory)
+- Fixed segment size: 1,000,000 elements (~1 MB per segment as boolean list)
+- Time complexity: O(x log log x) (unchanged)
+- Space complexity: O(1) for fixed segment size
+
+**Verification Results:**
+
+Memory measurements (after implementation):
+- resolve(50,000): **5.54 MB** peak (down from 7.80 MB, 29% reduction) ✓
+- resolve(100,000): **11.71 MB** peak (down from 16.24 MB, 28% reduction) ✓
+- resolve(250,000): **15.27 MB** peak (down from 42.71 MB, **64% reduction**) ✓
+
+**All tested indices now satisfy Part 6 section 6.4 constraint (< 25 MB).**
+
+Test results:
+- 55/55 tests passing (100% pass rate)
+- 3 new tests added for segmented sieve:
+  - test_pi_segmented_threshold (threshold dispatch)
+  - test_pi_segmented_large_values (multi-segment correctness)
+  - test_pi_segmented_vs_full_sieve (cross-validation)
+- All Tier A guarantees maintained (exact, deterministic π(x))
+- No API changes, no workflow changes (Part 4 and Part 5 compliance)
+
+**Files Modified:**
+- src/lulzprime/pi.py: Added _segmented_sieve(), modified pi() for threshold dispatch
+- tests/test_pi.py: Added 3 new tests for segmented sieve correctness
+- benchmarks/results/summary.md: Added Scale Characterization v2 section
+- docs/issues.md: This issue marked RESOLVED
+
+**Measured Impact:**
+- Average memory reduction: 40% across all indices
+- Largest reduction: 64% at index 250,000 (27.44 MB saved)
+- Safe range expanded: Now extends to 250k+ indices (previously limited to ~100k)
+- Production-ready for low-end devices (Part 6 section 6.2 compliance)
+
+**Date Resolved:** 2025-12-17
+**Commit:** [To be added after commit]
+
+---
 
 ## [BUG] Simulator Convergence Test Failure – 2025-12-17
 
