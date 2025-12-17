@@ -426,7 +426,85 @@ End of milestones log.
 
 **Status:** Policy established, enforcement implemented, performance limits documented
 
-**Commit/Tag:** [pending - benchmark-guardrails-v1]
+**Commit/Tag:** cbdb078
+
+---
+
+### Public API Contract Hardened – 2025-12-17
+
+**Goals:** G6 (Maintainability), G5 (Scope Integrity), G7 (OMPC Alignment)
+
+**Deliverable:**
+- Hardened public API contract to prevent misuse and set correct user expectations
+- Formalized Tier A/B/C guarantees with explicit NOT-guarantees
+- Created comprehensive API contract documentation (docs/api_contract.md)
+- Updated README with "What LULZprime Is/Is NOT" sections
+- Enhanced all public function docstrings with performance envelopes and constraints
+
+**Verification:**
+- **Docstring Updates:** All 7 public functions now have:
+  - GUARANTEES section (what IS promised)
+  - INPUT CONSTRAINTS section (including practical limits)
+  - PERFORMANCE ENVELOPE section (qualitative scaling)
+  - DOES NOT GUARANTEE section (explicit non-promises)
+  - WARNING sections for critical misuse cases (forecast, simulate)
+
+- **Files Modified:**
+  - src/lulzprime/resolve.py (resolve, between, next_prime, prev_prime)
+  - src/lulzprime/forecast.py (forecast with NOT EXACT warnings)
+  - src/lulzprime/primality.py (is_prime with crypto warnings)
+  - src/lulzprime/simulator.py (simulate with CRITICAL MISUSE warnings)
+
+- **README.md Updates:**
+  - Added "What LULZprime Is" section (navigation, deterministic, hardware efficient)
+  - Added "What LULZprime Is NOT" section (not crypto, not unbounded, not predictor)
+  - Added "Practical Index Range" section with Phase 1 performance tiers
+  - Improved Quick Start examples with Tier A/B/C annotations
+  - All claims aligned with benchmark_policy.md (≤ 250k practical, 500k+ impractical)
+
+- **docs/api_contract.md Created:** NEW comprehensive contract document with:
+  - Formalized Tier A (Exact), Tier B (Verified), Tier C (Estimate) definitions
+  - Per-function guarantee specifications
+  - Misuse cases section with code examples (5 critical misuses documented)
+  - Performance expectations table
+  - Determinism and reproducibility guarantees
+  - Contract violation definitions
+
+**Consistency Verification:**
+- ✅ README practical limits match benchmark_policy.md
+- ✅ Docstring performance envelopes match api_contract.md
+- ✅ Tier A/B/C definitions consistent across all docs
+- ✅ No crypto promises anywhere (explicit warnings added)
+- ✅ forecast() marked as estimate (NOT exact) in all locations
+- ✅ simulate() marked as non-exact with CRITICAL MISUSE warnings
+- ✅ No unbounded runtime promises (practical limits documented)
+
+**Misuse Cases Documented:**
+1. Using forecast() as exact primes (Tier C misunderstanding)
+2. Using simulate() as exact primes (critical simulator misuse)
+3. Cryptographic use cases (explicit prohibition + warnings)
+4. Unbounded index assumptions (practical limits documented)
+5. Security-critical applications (not suitable, use crypto libraries)
+
+**Goal Alignment:**
+- G5 (Scope Integrity): Clear boundaries on what LULZprime is/is NOT
+- G6 (Maintainability): Consistent, explicit contracts across all documentation
+- G7 (OMPC Alignment): Navigation model emphasized, no prediction claims
+
+**Impact:**
+- Third-party users cannot accidentally misuse the library
+- Explicit performance envelopes prevent unrealistic expectations
+- Tier A/B/C system prevents ambiguous correctness claims
+- Comprehensive misuse case documentation protects against crypto misuse
+- README sets correct expectations before installation
+
+**Test Status:**
+- No code changes (documentation only)
+- All 55 tests continue to pass (verified in Task 6)
+
+**Status:** Public API contract hardened, usage boundaries explicit, misuse cases documented
+
+**Commit/Tag:** [pending - harden-api-contract]
 
 ---
 

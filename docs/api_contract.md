@@ -1,0 +1,385 @@
+# API Contract
+
+**LULZprime – Public API Guarantees, Tiers, and Misuse Cases**
+
+---
+
+## Purpose
+
+This document formalizes the public API contract for LULZprime, defining explicit guarantees, constraints, and boundaries for all exported functions.
+
+It serves as the canonical reference for:
+- What each function guarantees (correctness, determinism, performance)
+- What each function does NOT guarantee
+- Tier classifications (A, B, C)
+- Misuse cases that users must avoid
+
+**Canonical references:**
+- `paper/OMPC_v1.33.7lulz.pdf` (conceptual foundation)
+- `docs/manual/part_4.md` (API specification)
+- `docs/manual/part_9.md` (alignment goals)
+
+---
+
+## Guarantee Tiers
+
+LULZprime defines three guarantee tiers to prevent ambiguous correctness claims:
+
+### Tier A (Exact)
+- **Definition**: Returns the exact mathematical value by construction
+- **Verification**: Proven correct via workflow (forecast → π(x) → primality confirmation)
+- **Functions**: `resolve(index)`
+- **Promise**: Output is always the exact p_index, never approximate
+- **Example**: `resolve(100)` always returns exactly 541 (the 100th prime)
+
+### Tier B (Verified)
+- **Definition**: Returns confirmed primes via primality testing
+- **Verification**: Each returned value passes deterministic primality test
+- **Functions**: `between(x, y)`, `next_prime(n)`, `prev_prime(n)`, `is_prime(n)`
+- **Promise**: If returns True or a prime, that value is verified prime (no false positives)
+- **Example**: `is_prime(541)` returns True only after deterministic Miller-Rabin verification
+
+### Tier C (Estimate)
+- **Definition**: Returns approximate values for navigation, NOT exact truth
+- **Verification**: None (estimate only, no correctness guarantee)
+- **Functions**: `forecast(index)`
+- **Promise**: Fast O(1) approximation, typically within ~1% of true value
+- **Warning**: `forecast(index)` may NOT equal `resolve(index)`, may not be prime
+
+---
+
+## Public API Functions
+
+### resolve(index: int) -> int
+
+**Tier**: A (Exact)
+
+**Purpose**: Return the exact nth prime p_index.
+
+**Guarantees:**
+- Exact by construction (uses forecast → π(x) → primality-confirmed correction)
+- Deterministic (same index always yields same result)
+- No hidden network access or precomputation
+- Workflow compliance per Part 5 section 5.3
+
+**Input Constraints:**
+- index >= 1 (1-based indexing)
+- index must be integer
+- Practical limit: ≤ ~250,000 (completes within minutes)
+- Stress limit: > 500,000 may exceed 30 minutes
+
+**Does NOT Guarantee:**
+- Bounded runtime for arbitrary large indices
+- Cryptographic properties (not suitable for security)
+- Sublinear time complexity (current: O(x log log x) where x ≈ p_index)
+
+---
+
+### forecast(index: int) -> int
+
+**Tier**: C (Estimate)
+
+**Purpose**: Return an analytic estimate for p_index (navigation only).
+
+**Guarantees:**
+- Deterministic estimate (same index yields same estimate)
+- Fast O(1) computation
+- Typically within ~1% of true value for large indices
+
+**Input Constraints:**
+- index >= 1
+- index must be integer
+- No practical upper bound (formula works for arbitrarily large indices)
+
+**Does NOT Guarantee:**
+- Exactness (forecast(index) may NOT equal resolve(index))
+- Primality (returned value may not be prime)
+- Bounded error (relative error varies with index)
+
+**CRITICAL WARNING:**
+- Do NOT use `forecast()` as if it returns exact primes
+- Use `resolve()` for exact primes
+- `forecast()` is for navigation ONLY
+
+---
+
+### between(x: int, y: int) -> list[int]
+
+**Tier**: B (Verified)
+
+**Purpose**: Return all primes in [x, y] via localized primality testing.
+
+**Guarantees:**
+- All returned values are verified primes
+- Complete (all primes in range returned, none skipped)
+- Deterministic (same range yields same list)
+
+**Input Constraints:**
+- x <= y (valid range)
+- y >= 2 (no primes below 2)
+- Practical limit: ranges with < ~10,000 primes complete quickly
+
+**Does NOT Guarantee:**
+- Sublinear complexity in range size (linear in candidates tested)
+- Bounded runtime for arbitrarily large ranges
+
+---
+
+### next_prime(n: int) -> int
+
+**Tier**: B (Verified)
+
+**Purpose**: Return the smallest prime >= n.
+
+**Guarantees:**
+- Returned value is verified prime
+- Minimal (smallest prime >= n, not a larger one)
+- Deterministic
+
+**Input Constraints:**
+- n must be integer
+- Practical limit: n < 10^15 (deterministic primality test range)
+
+**Does NOT Guarantee:**
+- Bounded runtime (depends on gap to next prime, average ~log n)
+- Cryptographic properties
+
+---
+
+### prev_prime(n: int) -> int
+
+**Tier**: B (Verified)
+
+**Purpose**: Return the largest prime <= n.
+
+**Guarantees:**
+- Returned value is verified prime
+- Maximal (largest prime <= n, not a smaller one)
+- Deterministic
+
+**Input Constraints:**
+- n >= 2 (no primes below 2)
+- n must be integer
+- Practical limit: n < 10^15
+
+**Does NOT Guarantee:**
+- Bounded runtime (depends on gap to previous prime)
+- Cryptographic properties
+
+---
+
+### is_prime(n: int) -> bool
+
+**Tier**: B (Verified)
+
+**Purpose**: Deterministic primality test for n < 2^64.
+
+**Guarantees:**
+- Deterministic and correct for n < 2^64 (~1.8 × 10^19)
+- No false positives (if True, n is guaranteed prime)
+- No false negatives (if n is prime and n < 2^64, returns True)
+
+**Input Constraints:**
+- n >= 0
+- n must be integer
+- Deterministic guarantee valid for n < 2^64
+
+**Does NOT Guarantee:**
+- Cryptographic security (not a crypto primitive)
+- Constant time execution (timing may leak information)
+- Suitability for security-critical applications
+
+**WARNING:**
+Not suitable for cryptographic applications. Use established cryptographic libraries for security-sensitive primality testing.
+
+---
+
+### simulate(n_steps, *, seed, diagnostics, ...) -> list[int] | tuple
+
+**Tier**: N/A (Simulation output, not exact primes)
+
+**Purpose**: Generate pseudo-primes for testing and validation.
+
+**Guarantees:**
+- Reproducible (same seed yields same sequence)
+- Statistically prime-like (reproduces expected density/gaps)
+- Fast (no primality testing required)
+
+**Input Constraints:**
+- n_steps > 0
+- seed must be integer or None
+
+**Does NOT Guarantee:**
+- Exactness (simulate(n)[i] may NOT equal resolve(i))
+- Primality (returned values may not be prime)
+- Cryptographic properties
+- Truth generation (output is for validation, not authoritative)
+
+**CRITICAL MISUSE WARNING:**
+- DO NOT use `simulate()` output as if it were exact primes
+- Use `resolve()` for exact primes
+- Use `is_prime()` to verify primality
+- Simulation output has NO mathematical guarantee of primality
+
+---
+
+## Misuse Cases
+
+### Critical Misuses (Must Never Occur)
+
+1. **Using forecast() as exact primes:**
+   ```python
+   # ✗ WRONG: forecast() is estimate only
+   primes = [lulzprime.forecast(i) for i in range(1, 101)]
+
+   # ✓ CORRECT: Use resolve() for exact primes
+   primes = [lulzprime.resolve(i) for i in range(1, 101)]
+   ```
+
+2. **Using simulate() as exact primes:**
+   ```python
+   # ✗ WRONG: simulate() is not exact
+   primes = lulzprime.simulate(100, seed=42)
+
+   # ✓ CORRECT: Use resolve() for exact primes
+   primes = [lulzprime.resolve(i) for i in range(1, 101)]
+   ```
+
+3. **Cryptographic use cases:**
+   ```python
+   # ✗ WRONG: Not suitable for cryptographic key generation
+   p = lulzprime.resolve(1000)
+   q = lulzprime.resolve(1001)
+   n = p * q  # DO NOT use for RSA modulus
+
+   # ✓ CORRECT: Use established cryptographic libraries
+   from cryptography.hazmat.primitives.asymmetric import rsa
+   private_key = rsa.generate_private_key(...)
+   ```
+
+4. **Unbounded index assumptions:**
+   ```python
+   # ✗ WRONG: May exceed practical runtime limits
+   p = lulzprime.resolve(1_000_000)  # Impractical (30+ minutes)
+
+   # ✓ CORRECT: Stay within practical limits
+   if index <= 250_000:
+       p = lulzprime.resolve(index)
+   else:
+       print("Index exceeds practical limit, see benchmark_policy.md")
+   ```
+
+5. **Security-critical applications:**
+   ```python
+   # ✗ WRONG: Not suitable for security
+   if lulzprime.is_prime(candidate):
+       use_as_crypto_key(candidate)  # DO NOT
+
+   # ✓ CORRECT: Use cryptographic libraries
+   from cryptography.hazmat.primitives.asymmetric import rsa
+   # Use established crypto libraries for security
+   ```
+
+### Common Misunderstandings
+
+1. **"LULZprime can predict primes"**
+   - **FALSE**: LULZprime navigates to primes using analytic forecasting + exact correction
+   - It does not "predict" or "guess" primes
+   - All exact results (Tier A, B) are verified, not predicted
+
+2. **"forecast() returns primes"**
+   - **FALSE**: forecast() returns estimates (Tier C), not exact primes
+   - Use resolve() for exact primes
+
+3. **"LULZprime breaks cryptography"**
+   - **FALSE**: LULZprime is a navigation toolkit, not a cryptographic attack
+   - No factorization shortcuts, no RSA breaks
+   - See Part 0 section 0.5 and Part 2 Non-Goals
+
+4. **"All indices work equally fast"**
+   - **FALSE**: Performance scales with index size
+   - Practical limit: ~250,000 (minutes)
+   - Stress limit: 500,000+ (impractical, 30+ minutes)
+   - See docs/benchmark_policy.md for measured data
+
+---
+
+## Performance Expectations
+
+### Practical Index Ranges (Phase 1)
+
+| Index Range | Expected Runtime | Use Case |
+|-------------|------------------|----------|
+| 1 - 1,000 | Milliseconds | Scripting, interactive use |
+| 1,000 - 100,000 | Seconds | Batch processing |
+| 100,000 - 250,000 | Minutes | Large-scale tasks |
+| 500,000+ | Impractical (30+ min) | Future work (Phase 2) |
+
+**Note**: Phase 2 (true sublinear π(x) via Meissel-Lehmer) will improve large-index performance. Current implementation uses segmented sieve (O(x log log x)).
+
+---
+
+## Determinism and Reproducibility
+
+**All Tier A and Tier B functions are deterministic:**
+- Same inputs always yield same outputs
+- No hidden randomness or network access
+- No environment-dependent behavior (except for performance)
+
+**Tier C (forecast) is deterministic:**
+- Same index always yields same estimate
+- Estimate formula is fixed (refined PNT approximation)
+
+**Simulation (simulate) requires explicit seed for determinism:**
+- `simulate(n, seed=42)` is reproducible
+- `simulate(n, seed=None)` uses system randomness (non-deterministic)
+
+---
+
+## Contract Violations
+
+**The following behaviors violate the API contract:**
+
+1. **Silent correctness changes**: Changing Tier A/B output without version bump
+2. **Hidden precomputation**: Loading large prime tables without user consent
+3. **Network access**: Making network requests without explicit documentation
+4. **Non-determinism**: Returning different values for same inputs (except simulate with seed=None)
+5. **Unbounded blocking**: Hanging indefinitely without progress indication
+
+**If a violation is discovered:**
+- File an issue: https://github.com/RobLe3/lulzprime/issues
+- Reference: docs/issues.md (BUG or CONSTRAINT-VIOLATION)
+
+---
+
+## References
+
+- **Canonical paper**: paper/OMPC_v1.33.7lulz.pdf
+- **Public API spec**: docs/manual/part_4.md
+- **Workflows**: docs/manual/part_5.md
+- **Performance constraints**: docs/manual/part_6.md
+- **Project goals**: docs/manual/part_9.md
+- **Benchmark policy**: docs/benchmark_policy.md
+- **Open issues**: docs/issues.md
+
+---
+
+## Success Condition
+
+This API contract is effective if:
+- Users understand what each function guarantees and does NOT guarantee
+- Misuse cases are clearly documented and avoided
+- Tier A/B/C classifications prevent ambiguous correctness claims
+- Performance expectations are realistic and documented
+- Contract violations are rare and quickly identified
+
+---
+
+**Effective Date:** 2025-12-17
+**Version:** v0.1.0-dev
+**Policy Owner:** Core Team
+**Review Frequency:** After major API changes or performance improvements
+
+---
+
+End of API contract.
