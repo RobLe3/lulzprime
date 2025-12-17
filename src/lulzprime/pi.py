@@ -22,6 +22,9 @@ Phase 1 implementation (2025-12-17):
 """
 
 import math
+import os
+from concurrent.futures import ProcessPoolExecutor, TimeoutError as FuturesTimeoutError
+from typing import Callable
 from .primality import is_prime
 from .config import SMALL_PRIMES
 
@@ -313,3 +316,217 @@ def pi_range(x: int, y: int) -> int:
     if x >= y:
         return 0
     return pi(y) - pi(x)
+
+
+def _create_segment_ranges(start: int, end: int, num_workers: int) -> list[tuple[int, int]]:
+    """
+    Divide range [start, end] into num_workers disjoint segments.
+
+    Segments are created deterministically with fixed boundaries based on
+    start, end, and num_workers. This ensures deterministic aggregation.
+
+    Args:
+        start: Start of range (inclusive)
+        end: End of range (inclusive)
+        num_workers: Number of segments to create
+
+    Returns:
+        List of (segment_start, segment_end) tuples in ascending order
+
+    Example:
+        >>> _create_segment_ranges(100, 200, 4)
+        [(100, 124), (125, 149), (150, 174), (175, 200)]
+    """
+    if start > end:
+        return []
+    if num_workers <= 0:
+        raise ValueError(f"num_workers must be positive, got {num_workers}")
+
+    total_range = end - start + 1
+    segment_size = total_range // num_workers
+    remainder = total_range % num_workers
+
+    segments = []
+    current = start
+
+    for i in range(num_workers):
+        # Distribute remainder across first segments
+        size = segment_size + (1 if i < remainder else 0)
+        segment_start = current
+        segment_end = current + size - 1
+
+        if segment_start > end:
+            break
+
+        segments.append((segment_start, min(segment_end, end)))
+        current = segment_end + 1
+
+    return segments
+
+
+def _count_segment_primes(segment_start: int, segment_end: int, small_primes: list[int]) -> int:
+    """
+    Count primes in segment [segment_start, segment_end] using small primes.
+
+    This is the worker function for parallel prime counting. Each worker
+    processes an independent segment using the sieve algorithm.
+
+    Args:
+        segment_start: Start of segment (inclusive)
+        segment_end: End of segment (inclusive)
+        small_primes: List of primes <= sqrt(segment_end) for sieving
+
+    Returns:
+        Count of primes in [segment_start, segment_end]
+    """
+    if segment_start > segment_end:
+        return 0
+
+    segment_length = segment_end - segment_start + 1
+
+    # Create segment: False = prime (initially assume all prime)
+    is_composite = [False] * segment_length
+
+    # Sieve this segment using small primes
+    for p in small_primes:
+        # Find first multiple of p in segment
+        # We want smallest k such that k*p >= segment_start
+        first_multiple = ((segment_start + p - 1) // p) * p
+
+        # Skip if first multiple is p itself (p is prime, don't mark it composite)
+        if first_multiple == p:
+            first_multiple += p
+
+        # Mark multiples of p in this segment
+        for multiple in range(first_multiple, segment_end + 1, p):
+            index = multiple - segment_start
+            is_composite[index] = True
+
+    # Count primes in this segment
+    count = sum(1 for is_comp in is_composite if not is_comp)
+
+    return count
+
+
+def pi_parallel(x: int, workers: int | None = None, threshold: int = 1_000_000) -> int:
+    """
+    Return the exact count of primes <= x using parallel processing.
+
+    This is an opt-in parallel variant of pi() that leverages multi-core CPUs
+    to reduce wall-clock time for large x. Uses multiprocessing to bypass GIL.
+
+    GUARANTEES:
+    - Tier A (Exact): Same correctness as pi(), bit-identical results
+    - Deterministic: Same x and workers always yield same result
+    - Opt-in: Must be explicitly called, not used by default
+
+    STRATEGY:
+    1. Generate small primes up to sqrt(x) (sequential, small cost)
+    2. Divide range [sqrt(x), x] into disjoint segments
+    3. Process each segment in parallel (independent workers)
+    4. Aggregate counts in deterministic order (segment order)
+
+    PARALLELISM:
+    - Uses ProcessPoolExecutor (multiprocessing) to bypass GIL
+    - Each worker processes independent segment with no shared state
+    - Deterministic segment boundaries ensure reproducible results
+    - Fallback to sequential pi() if parallelization fails
+
+    PERFORMANCE:
+    - Expected speedup: 3-5x for x >= 1M on 4-8 core CPUs
+    - Threshold: x < threshold uses sequential pi() to avoid overhead
+    - Overhead: Process creation cost dominates for small x
+
+    TIME COMPLEXITY:
+    - Wall-clock: O(x log log x / workers) - linear speedup with workers
+    - CPU total: O(x log log x) - same total work as sequential
+
+    SPACE COMPLEXITY:
+    - O(segment_size + sqrt(x)) per worker
+    - Memory bounded by segment size (each worker independent)
+
+    DOES NOT GUARANTEE:
+    - Sublinear time (still O(x log log x), just parallelized)
+    - Linear speedup (overhead causes diminishing returns)
+    - Platform independence (multiprocessing behavior varies)
+
+    Args:
+        x: Upper bound for counting
+        workers: Number of parallel workers (default: min(cpu_count, 8))
+        threshold: Minimum x for parallelism (default: 1,000,000)
+
+    Returns:
+        Number of primes p with p <= x (exact, same as pi())
+
+    Raises:
+        ValueError: If x < 0 or workers <= 0
+        TypeError: If x is not an integer
+
+    Examples:
+        >>> pi_parallel(1_000_000)  # Uses default workers
+        78498
+
+        >>> pi_parallel(1_000_000, workers=4)  # Explicit worker count
+        78498
+
+        >>> pi_parallel(100_000)  # Below threshold, uses sequential
+        9592
+
+    References:
+        - ADR 0004: Parallel π(x) implementation decision
+        - docs/api_contract.md: Performance expectations
+    """
+    # Input validation (same as pi())
+    if not isinstance(x, int):
+        raise TypeError(f"x must be an integer, got {type(x).__name__}")
+    if x < 0:
+        raise ValueError(f"x must be non-negative, got {x}")
+
+    # Worker count validation
+    if workers is not None and workers <= 0:
+        raise ValueError(f"workers must be positive, got {workers}")
+
+    # Below threshold: use sequential pi() to avoid overhead
+    if x < threshold:
+        return pi(x)
+
+    # Determine worker count
+    if workers is None:
+        workers = min(os.cpu_count() or 1, 8)
+
+    # Small x edge case
+    if x < 2:
+        return 0
+
+    # Generate small primes up to sqrt(x) (sequential)
+    sqrt_x = int(math.sqrt(x))
+    small_primes = _simple_sieve(sqrt_x)
+    count = len(small_primes)
+
+    # If x <= sqrt_x, we're done
+    if x <= sqrt_x:
+        return count
+
+    # Divide range (sqrt_x, x] into segments for parallel processing
+    try:
+        segments = _create_segment_ranges(sqrt_x + 1, x, workers)
+
+        # Process segments in parallel
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            # Map preserves order, ensuring deterministic aggregation
+            segment_counts = executor.map(
+                _count_segment_primes,
+                [seg[0] for seg in segments],  # segment_start values
+                [seg[1] for seg in segments],  # segment_end values
+                [small_primes] * len(segments)  # small_primes for each worker
+            )
+
+        # Aggregate in deterministic order (map preserves segment order)
+        count += sum(segment_counts)
+
+        return count
+
+    except Exception:
+        # Fallback to sequential pi() if parallelization fails
+        # This handles platform issues, worker crashes, etc.
+        return pi(x)

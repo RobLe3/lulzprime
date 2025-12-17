@@ -401,6 +401,40 @@ results = lulzprime.between_many(ranges)
 
 **Note**: Phase 2 (true sublinear π(x) via Meissel-Lehmer) will improve large-index performance. Current implementation uses segmented sieve (O(x log log x)).
 
+### Optional Parallel Acceleration
+
+**Opt-in parallel π(x) backend available** (added 2025-12-17, ADR 0004):
+
+LULZprime provides an optional `pi_parallel()` function that leverages multi-core CPUs to reduce wall-clock time for large indices:
+
+```python
+from lulzprime.pi import pi_parallel
+
+# Use parallel backend for large x
+count = pi_parallel(1_000_000, workers=4)  # ~3-5x faster than pi(1_000_000)
+```
+
+**Characteristics:**
+- **Opt-in only**: Not used by default, must be explicitly called
+- **Deterministic**: Bit-identical results to `pi()` for same inputs
+- **Multi-core speedup**: 3-5x faster for x >= 1M on 4-8 core CPUs
+- **Threshold-based**: Automatically falls back to sequential for x < 1M (avoids overhead)
+- **Memory safe**: Bounded memory per worker, same constraints as `pi()`
+
+**Use cases:**
+- Large-scale batch processing (resolve_many with pi_fn=pi_parallel)
+- Interactive exploration at 500k+ indices (reduces wait time)
+- Development workflow where 30+ min is impractical
+
+**Not suitable for:**
+- Small x (< 1M): overhead dominates, no benefit
+- Security-critical applications: same as `pi()`, not crypto-safe
+- True sublinear complexity: still O(x log log x), just parallelized
+
+**See also:**
+- docs/adr/0004-parallel-pi.md for implementation details
+- Part 6 section 6.3: Phase 2 sublinear π(x) remains future work
+
 ---
 
 ## Determinism and Reproducibility

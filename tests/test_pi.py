@@ -5,7 +5,7 @@ Verifies implementation from docs/manual/part_4.md section 4.7.
 """
 
 import pytest
-from lulzprime.pi import pi, pi_range
+from lulzprime.pi import pi, pi_range, pi_parallel, _create_segment_ranges, _count_segment_primes
 
 
 class TestPi:
@@ -128,3 +128,196 @@ class TestPiRange:
         test_cases = [(0, 10), (10, 50), (50, 100), (100, 200)]
         for x, y in test_cases:
             assert pi_range(x, y) == pi(y) - pi(x)
+
+
+class TestPiParallelHelpers:
+    """Test helper functions for parallel π(x)."""
+
+    def test_create_segment_ranges_basic(self):
+        """Test segment range creation with basic inputs."""
+        segments = _create_segment_ranges(100, 200, 4)
+
+        # Should create 4 segments covering [100, 200]
+        assert len(segments) == 4
+
+        # First segment starts at 100
+        assert segments[0][0] == 100
+
+        # Last segment ends at 200
+        assert segments[-1][1] == 200
+
+        # Segments are contiguous
+        for i in range(len(segments) - 1):
+            assert segments[i][1] + 1 == segments[i + 1][0]
+
+    def test_create_segment_ranges_uneven_split(self):
+        """Test segment range creation with uneven splits."""
+        # 101 elements split into 4 workers: sizes 26, 25, 25, 25
+        segments = _create_segment_ranges(0, 100, 4)
+
+        assert len(segments) == 4
+
+        # First segment gets the remainder (26 elements)
+        assert segments[0][1] - segments[0][0] + 1 == 26
+
+        # Others get 25 elements each
+        for i in range(1, 4):
+            assert segments[i][1] - segments[i][0] + 1 == 25
+
+    def test_create_segment_ranges_invalid_workers(self):
+        """Test that invalid worker counts raise ValueError."""
+        with pytest.raises(ValueError, match="num_workers must be positive"):
+            _create_segment_ranges(100, 200, 0)
+
+        with pytest.raises(ValueError, match="num_workers must be positive"):
+            _create_segment_ranges(100, 200, -1)
+
+    def test_create_segment_ranges_empty_range(self):
+        """Test segment creation with empty range."""
+        segments = _create_segment_ranges(200, 100, 4)
+        assert segments == []
+
+    def test_count_segment_primes_basic(self):
+        """Test counting primes in a segment."""
+        from lulzprime.pi import _simple_sieve
+
+        # Count primes in [100, 200]
+        small_primes = _simple_sieve(14)  # sqrt(200) ≈ 14
+        count = _count_segment_primes(100, 200, small_primes)
+
+        # Primes in [100, 200]: 101, 103, ..., 199 (21 primes)
+        assert count == 21
+
+    def test_count_segment_primes_empty(self):
+        """Test counting primes in empty segment."""
+        from lulzprime.pi import _simple_sieve
+
+        small_primes = _simple_sieve(10)
+        count = _count_segment_primes(200, 100, small_primes)
+        assert count == 0
+
+
+class TestPiParallel:
+    """Test parallel π(x) implementation."""
+
+    def test_pi_parallel_correctness_small(self):
+        """Test pi_parallel matches pi() for small values."""
+        # Small values (below threshold, should use sequential path)
+        test_values = [100, 1000, 10000, 100000]
+
+        for x in test_values:
+            result_parallel = pi_parallel(x)
+            result_sequential = pi(x)
+            assert result_parallel == result_sequential, \
+                f"pi_parallel({x}) = {result_parallel} != pi({x}) = {result_sequential}"
+
+    def test_pi_parallel_correctness_large(self):
+        """Test pi_parallel matches pi() for large values (above threshold)."""
+        # Large value (above threshold = 1M, should use parallel path)
+        # Use 1M which is known: π(1,000,000) = 78498
+        x = 1_000_000
+        result_parallel = pi_parallel(x, workers=2)
+        result_sequential = pi(x)
+
+        assert result_parallel == result_sequential == 78498, \
+            f"pi_parallel({x}) = {result_parallel} != pi({x}) = {result_sequential}"
+
+    def test_pi_parallel_determinism(self):
+        """Test that pi_parallel is deterministic (same x yields same result)."""
+        x = 1_000_000
+        workers = 4
+
+        # Run multiple times with same parameters
+        results = [pi_parallel(x, workers=workers) for _ in range(3)]
+
+        # All results should be identical
+        assert len(set(results)) == 1, \
+            f"pi_parallel not deterministic: got {results}"
+
+    def test_pi_parallel_different_workers_same_result(self):
+        """Test that different worker counts yield same result."""
+        x = 1_000_000
+
+        # Test with different worker counts
+        result_1 = pi_parallel(x, workers=1)
+        result_2 = pi_parallel(x, workers=2)
+        result_4 = pi_parallel(x, workers=4)
+
+        assert result_1 == result_2 == result_4, \
+            f"Different worker counts gave different results: {result_1}, {result_2}, {result_4}"
+
+    def test_pi_parallel_threshold_fallback(self):
+        """Test that values below threshold use sequential path."""
+        # Below default threshold (1M), should use sequential pi()
+        x = 500_000
+
+        # Should work correctly even though below threshold
+        result_parallel = pi_parallel(x)
+        result_sequential = pi(x)
+
+        assert result_parallel == result_sequential
+
+    def test_pi_parallel_custom_threshold(self):
+        """Test pi_parallel with custom threshold."""
+        x = 100_000
+
+        # With high threshold, should use sequential path
+        result_high_threshold = pi_parallel(x, threshold=200_000)
+
+        # With low threshold, should use parallel path
+        result_low_threshold = pi_parallel(x, threshold=50_000, workers=2)
+
+        # Both should match sequential result
+        result_sequential = pi(x)
+        assert result_high_threshold == result_low_threshold == result_sequential
+
+    def test_pi_parallel_invalid_workers(self):
+        """Test that invalid worker counts raise ValueError."""
+        with pytest.raises(ValueError, match="workers must be positive"):
+            pi_parallel(1_000_000, workers=0)
+
+        with pytest.raises(ValueError, match="workers must be positive"):
+            pi_parallel(1_000_000, workers=-1)
+
+    def test_pi_parallel_input_validation(self):
+        """Test pi_parallel input validation (same as pi)."""
+        # Non-integer x
+        with pytest.raises(TypeError):
+            pi_parallel(1.5)
+
+        # Negative x
+        with pytest.raises(ValueError):
+            pi_parallel(-1)
+
+    def test_pi_parallel_edge_cases(self):
+        """Test pi_parallel edge cases."""
+        # x < 2
+        assert pi_parallel(0) == 0
+        assert pi_parallel(1) == 0
+
+        # x = 2 (first prime)
+        assert pi_parallel(2) == 1
+
+        # Small primes
+        assert pi_parallel(10) == 4
+
+    def test_pi_parallel_default_workers(self):
+        """Test that default workers parameter works."""
+        x = 1_000_000
+
+        # Should use default worker count (min(cpu_count, 8))
+        result = pi_parallel(x)
+
+        # Should match sequential result
+        assert result == pi(x)
+
+    def test_pi_parallel_monotonicity(self):
+        """Test that pi_parallel is monotone increasing like pi."""
+        # Test at various scales, including above threshold
+        values = [100_000, 500_000, 1_000_000]
+        results = [pi_parallel(x, workers=2) for x in values]
+
+        # Should be monotone increasing
+        for i in range(1, len(results)):
+            assert results[i] >= results[i-1], \
+                f"pi_parallel not monotone at {values[i]}"

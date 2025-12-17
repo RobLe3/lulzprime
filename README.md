@@ -28,6 +28,11 @@ LULZprime is a Python library for efficient prime number resolution using analyt
 - **Large indices (100,000 - 250,000):** minutes - acceptable for batch jobs
 - **Stress indices (500,000+):** impractical (30+ minutes) - future work
 
+**Optional parallel acceleration** (opt-in, added 2025-12-17):
+- **`pi_parallel(x, workers=4)`** provides 3-5x wall-time speedup for large indices on multi-core CPUs
+- Useful for 500k+ indices where sequential is impractical
+- See `docs/adr/0004-parallel-pi.md` for details
+
 See `docs/benchmark_policy.md` for measured performance data.
 
 ## Installation

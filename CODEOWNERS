@@ -1,0 +1,41 @@
+# CODEOWNERS for LULZprime
+#
+# These owners will be requested for review when someone opens a pull request.
+# Order matters: last matching pattern takes precedence.
+
+# Default owner for everything
+* @RobLe3
+
+# Documentation
+/docs/ @RobLe3
+/README.md @RobLe3
+/CONTRIBUTING.md @RobLe3
+
+# Manual parts (require careful review)
+/docs/manual/ @RobLe3
+/docs/autostart.md @RobLe3
+/docs/defaults.md @RobLe3
+
+# Tracking files
+/docs/milestones.md @RobLe3
+/docs/todo.md @RobLe3
+/docs/issues.md @RobLe3
+
+# Core modules (public API changes require approval)
+/src/lulzprime/__init__.py @RobLe3
+/src/lulzprime/resolve.py @RobLe3
+/src/lulzprime/forecast.py @RobLe3
+/src/lulzprime/primality.py @RobLe3
+
+# Tests
+/tests/ @RobLe3
+
+# Configuration
+/pyproject.toml @RobLe3
+/.gitignore @RobLe3
+
+# Security
+/SECURITY.md @RobLe3
+
+# Paper (read-only, should not change)
+/paper/ @RobLe3
