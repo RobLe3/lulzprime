@@ -584,7 +584,117 @@ End of milestones log.
 
 **Status:** Batch API implemented, tested, documented, ready for use
 
-**Commit/Tag:** [pending - add-batch-api]
+**Commit/Tag:** 8943766
+
+---
+
+### Batch Caching Made Side-Effect Free – 2025-12-17
+
+**Goals:** G2 (Hardware Efficiency), G3 (Determinism), G6 (Maintainability)
+
+**Deliverable:**
+- Eliminated global monkeypatching from resolve_many() implementation
+- Refactored to use dependency injection for π(x) caching
+- Preserved all existing behavior and Tier A guarantees
+- Made batch operations thread-safe by design
+
+**Problem:**
+Previous implementation used temporary global patching:
+```python
+# OLD - PROBLEMATIC
+pi_module.pi = cached_pi  # Global mutation
+try:
+    result = resolve_internal(index)
+finally:
+    pi_module.pi = original_pi  # Restore
+```
+
+This approach:
+- Blocks future parallelism
+- Creates hidden side effects
+- Not thread-safe
+- Violates clean dependency injection principles
+
+**Solution:**
+Implemented dependency injection pattern:
+1. Added `resolve_internal_with_pi(index, pi_fn)` in lookup.py
+2. Modified `_binary_search_pi` to accept pi_fn parameter
+3. resolve_many() creates local `cached_pi` closure
+4. Passes closure to `resolve_internal_with_pi` (no global mutation)
+
+**Verification:**
+- **Files Modified:**
+  - src/lulzprime/lookup.py: Added resolve_internal_with_pi() for dependency injection
+  - src/lulzprime/batch.py: Removed global patching, uses local closure + injection
+  - tests/test_resolve.py: Updated structural test to check new function
+  - tests/test_batch.py: Added 3 new tests for global mutation verification
+  - docs/api_contract.md: Updated optimization strategy description
+
+- **New Tests Added:** 3 tests in TestResolveManyNoGlobalMutation class
+  - test_no_global_pi_mutation: Verifies pi() identity unchanged
+  - test_consecutive_calls_no_state: Verifies no leftover state between calls
+  - test_sentinel_wrapper_not_leaked: Verifies no wrapper leaks to global scope
+
+- **Test Results:** 91/91 tests passing (88 original + 3 new = 100% pass rate)
+  - All existing batch tests pass (determinism, order preservation, correctness)
+  - All existing resolve tests pass (Part 5 compliance verified)
+  - New tests confirm no global mutation
+
+**Implementation Details:**
+
+**Before (Global Patching):**
+```python
+def _resolve_with_pi_cache(index, pi_cache):
+    original_pi = pi_module.pi
+    pi_module.pi = cached_pi  # GLOBAL MUTATION
+    try:
+        result = resolve_internal(index)
+    finally:
+        pi_module.pi = original_pi  # Restore
+```
+
+**After (Dependency Injection):**
+```python
+# In resolve_many():
+def cached_pi(x: int) -> int:
+    """Local closure, no global state."""
+    if x not in pi_cache:
+        pi_cache[x] = default_pi(x)
+    return pi_cache[x]
+
+# Pass to internal resolver
+result = resolve_internal_with_pi(index, cached_pi)
+```
+
+**Goal Alignment:**
+- G2 (Hardware Efficiency): Same π(x) caching efficiency, now thread-safe
+- G3 (Determinism): Same deterministic behavior, verified via tests
+- G6 (Maintainability): Cleaner dependency injection, enables future parallelism
+
+**Behavioral Guarantees Preserved:**
+- ✅ Tier A exact results unchanged
+- ✅ Order preservation unchanged
+- ✅ Determinism unchanged
+- ✅ Performance characteristics unchanged
+- ✅ All 88 original tests pass
+- ✅ No API changes
+
+**New Capabilities Enabled:**
+- Thread-safe batch operations (no shared mutable global state)
+- Future parallelization possible (no global locks needed)
+- Cleaner testing (can inject mock π(x) for unit tests)
+- No hidden side effects
+
+**Impact:**
+- Batch caching remains efficient (local closure overhead negligible)
+- Code is now thread-safe by design
+- Future parallel batch operations possible
+- No global state mutation anywhere in codebase
+- Clean dependency injection pattern established
+
+**Status:** Global patching eliminated, batch operations thread-safe, all tests pass
+
+**Commit/Tag:** b6c1bd0
 
 ---
 
