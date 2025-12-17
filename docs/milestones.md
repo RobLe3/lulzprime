@@ -361,5 +361,74 @@ End of milestones log.
 
 ---
 
+### Benchmark Guardrails and Performance Limits – 2025-12-17
+
+**Goals:** G6 (Maintainability - reproducible benchmarking)
+
+**Deliverable:**
+- Created benchmark policy framework to prevent accidental long-running benchmarks
+- Established mandatory time caps and approval rules for stress benchmarks (500k+)
+- Enforced policy in benchmark scripts with stdlib-only timeout guards
+- Documented performance limits: 500k+ indices impractical with current implementation
+
+**Verification:**
+- **Policy Document:** docs/benchmark_policy.md
+  - Default time cap: 60 seconds per index
+  - Default benchmark set: 50k, 100k, 250k only
+  - Stress benchmarks (500k+) require explicit approval in docs/milestones.md
+  - Timeout enforcement mandatory (abort on cap exceeded)
+- **Benchmark Script Updates:** benchmarks/bench_scale_characterization.py
+  - Added argparse CLI: `--max-seconds` flag, `MAX_SECONDS` env var
+  - Stress benchmark check: interactive prompt for 500k+ indices
+  - Timeout guard: aborts run if time cap exceeded, records TIMEOUT status
+  - Stdlib only: no external dependencies (time, argparse, tracemalloc)
+- **Issue Tracking:** docs/issues.md
+  - New open issue: [PERFORMANCE] resolve(500,000) exceeds acceptable runtime
+  - Severity: MEDIUM, Status: OPEN
+  - Evidence: 500k and 1M indices exceeded 30 minutes runtime
+  - Proposed remediation: Phase 2 sublinear π(x) (future work)
+
+**Practical Limits Established:**
+- **Indices 1-100k:** Good (seconds, full sieve)
+- **Indices 100k-250k:** Acceptable (minutes, segmented sieve)
+- **Indices 250k-500k:** Impractical (30+ minutes runtime)
+- **Indices 500k+:** Not viable with current implementation
+
+**Benchmark Policy Categories:**
+1. **Smoke Benchmarks:** 1, 10, 100, 1000 (5s total cap, no approval)
+2. **Scale Benchmarks:** 50k, 100k, 250k (60s per index cap, no approval)
+3. **Stress Benchmarks:** 500k+ (explicit approval required, documented in milestones)
+
+**Enforcement Mechanism:**
+- CLI flags: `--max-seconds N` or `-t N`
+- Environment variable: `MAX_SECONDS=N`
+- Default: 60 seconds per index
+- Timeout guard: checks elapsed time, aborts if exceeded
+- Partial results: records TIMEOUT status, marks subsequent indices NOT_RUN
+
+**Goal Alignment:**
+- G6 (Maintainability): Reproducible benchmarking with time-bounded execution
+- Prevents accidental 30+ minute runs that block development workflow
+- Clear approval process for stress benchmarks (500k+)
+- Documentation consistency maintained (no conflicting runtime claims)
+
+**Files Modified:**
+- docs/benchmark_policy.md: NEW - policy framework
+- benchmarks/bench_scale_characterization.py: Added time cap enforcement
+- docs/issues.md: Added [PERFORMANCE] issue, fixed stale memory claims
+- docs/milestones.md: This entry
+
+**Impact:**
+- Development workflow protected from accidental long-running benchmarks
+- Clear boundaries: default set (50k/100k/250k) vs stress benchmarks (500k+)
+- Practical limits documented and enforced via policy
+- Future stress benchmarks require explicit approval and documentation
+
+**Status:** Policy established, enforcement implemented, performance limits documented
+
+**Commit/Tag:** [pending - benchmark-guardrails-v1]
+
+---
+
 End of milestones log.
 

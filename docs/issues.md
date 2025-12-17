@@ -63,7 +63,67 @@ How it was fixed, commit reference
 
 ## Open Issues
 
-**None** - All issues resolved.
+## [PERFORMANCE] resolve(500,000) exceeds acceptable runtime – 2025-12-17
+
+**Status:** OPEN
+
+**Severity:** MEDIUM
+
+**Affected Components:**
+- src/lulzprime/resolve.py:resolve()
+- src/lulzprime/pi.py:_segmented_sieve()
+
+**Description:**
+Scale characterization benchmarks at resolve(500,000) and resolve(1,000,000) exceed 30 minutes runtime, making these indices impractical for development workflow and routine testing. The current segmented sieve implementation, while memory-compliant (< 25 MB), has high per-segment overhead that causes excessive runtime at large indices.
+
+**Related Parts:** Part 6 (section 6.3 - sublinear π(x) target)
+
+**Evidence:**
+- benchmarks/bench_scale_characterization.py runs at 500k and 1M indices exceeded 30 minutes
+- Both runs were killed after timeout
+- Established practical limits:
+  - Indices 1-100k: Good (seconds, full sieve)
+  - Indices 100k-250k: Acceptable (minutes, segmented sieve)
+  - Indices 250k-500k: Impractical (30+ minutes runtime)
+  - Indices 500k+: Not viable with current implementation
+
+**Expected Behavior:**
+- Per docs/benchmark_policy.md, benchmarks should complete within time caps
+- Default time cap: 60 seconds per index
+- Stress benchmarks (500k+) require explicit approval due to excessive runtime
+
+**Actual Behavior:**
+- resolve(500,000) exceeds 30 minutes (1800+ seconds)
+- resolve(1,000,000) exceeds 30 minutes (1800+ seconds)
+- Current segmented sieve (Phase 1) is memory-bounded but not time-efficient at large scales
+
+**Impact:**
+- Blocks development workflow for indices beyond 250k
+- Prevents routine testing at stress benchmark levels (500k+)
+- Part 6 section 6.3 specifies sublinear π(x) as target (not yet implemented)
+- Current implementation is O(x log log x) - optimized linear, not sublinear
+
+**Proposed Remediation:**
+1. **Phase 2 (Future Work):** Implement true sublinear π(x) backend
+   - Meissel-Lehmer or Deleglise-Rivat algorithm
+   - Time complexity: O(x^(2/3)) - true sublinear
+   - Space complexity: O(x^(1/3)) - sublinear memory
+   - Expected runtime at 500k: seconds instead of 30+ minutes
+   - Implementation effort: 20-40 hours (per docs/todo.md)
+   - Priority: MEDIUM (optimization, current limits documented)
+
+2. **Alternative (If Needed Before Phase 2):**
+   - Approved multiprocessing for segmented sieve
+   - Parallel segment processing
+   - Would require benchmark policy approval for parallel execution
+
+**Benchmark Policy Compliance:**
+- docs/benchmark_policy.md now enforces 60-second default time cap
+- Stress benchmarks (500k+) require explicit approval in docs/milestones.md
+- Default benchmark set restricted to 50k, 100k, 250k (all complete within caps)
+- This issue logged per policy requirement
+
+**Status:** Documented as known limitation. Phase 2 sublinear π(x) remains future work per docs/todo.md.
 
 ---
 
@@ -293,7 +353,7 @@ Phase 1 (segmented sieve) implemented and verified. Memory constraint violation 
 - Hybrid threshold-based dispatch:
   - x < 100,000: Full sieve (fast for small x)
   - x >= 100,000: Segmented sieve (bounded memory)
-- Fixed segment size: 1,000,000 elements (~1 MB per segment as boolean list)
+- Fixed segment size: 1,000,000 elements (~8 MB per segment with Python list[bool] pointer overhead)
 - Time complexity: O(x log log x) (unchanged)
 - Space complexity: O(1) for fixed segment size
 
