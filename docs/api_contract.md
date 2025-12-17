@@ -223,6 +223,87 @@ Not suitable for cryptographic applications. Use established cryptographic libra
 
 ---
 
+### resolve_many(indices: Iterable[int]) -> list[int]
+
+**Tier**: A (Exact)
+
+**Purpose**: Efficiently resolve multiple prime indices in a single call.
+
+**Guarantees:**
+- Tier A (Exact): Each result is exact p_index, same as resolve()
+- Deterministic: Same indices always yield same results in same order
+- Order preservation: Results match input order exactly
+- No global state: π(x) cache exists only during this call
+
+**Input Constraints:**
+- Each index must be >= 1 (1-based indexing)
+- Each index must be integer
+- Duplicates allowed (will compute each independently)
+- Practical limit per batch: ~100 indices (to stay within benchmark caps)
+- Each index subject to same limits as resolve() (≤ ~250k practical)
+
+**Optimization Strategy:**
+- Internally sorts indices to minimize π(x) recomputation
+- Caches π(x) results within this single batch execution
+- No persistent global cache (cache discarded after return)
+- Speedup depends on index locality (sorted indices share π(x) work)
+
+**Performance Envelope:**
+- Small batches (< 10): seconds (similar to loop)
+- Medium batches (10-100): faster than loop (π(x) caching benefit)
+- Large batches (100+): may exceed benchmark time caps
+
+**Does NOT Guarantee:**
+- Bounded runtime for arbitrary large batches
+- Parallelization (single-threaded execution)
+- Memory efficiency beyond O(batch_size) for results
+
+**Example:**
+```python
+# Efficient batch resolution
+indices = [1, 10, 100, 50, 25]
+primes = lulzprime.resolve_many(indices)
+# Returns: [2, 29, 541, 229, 97] (order preserved)
+```
+
+---
+
+### between_many(ranges: Iterable[tuple[int,int]]) -> list[list[int]]
+
+**Tier**: B (Verified)
+
+**Purpose**: Efficiently query primes in multiple ranges.
+
+**Guarantees:**
+- Tier B (Verified): All returned primes are verified
+- Deterministic: Same ranges always yield same results
+- Order preservation: Results match input range order
+- Completeness: All primes in each range returned
+
+**Input Constraints:**
+- Each range must be (x, y) tuple with x <= y
+- y must be >= 2 for each range
+- Practical limit: ranges with < ~10,000 primes each
+- Batch size: reasonable number of ranges (< 100)
+
+**Performance Envelope:**
+- Linear in total primes returned
+- No cross-range optimization (each range independent)
+
+**Does NOT Guarantee:**
+- Cross-range optimization or caching
+- Parallelization
+
+**Example:**
+```python
+# Batch range queries
+ranges = [(10, 20), (100, 110)]
+results = lulzprime.between_many(ranges)
+# Returns: [[11, 13, 17, 19], [101, 103, 107, 109]]
+```
+
+---
+
 ## Misuse Cases
 
 ### Critical Misuses (Must Never Occur)

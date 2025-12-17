@@ -69,10 +69,16 @@ prev_p = lulzprime.prev_prime(100)   # 97 (largest prime <= 100)
 # Example 5: Estimate for navigation (Tier C: Estimate only, NOT exact)
 estimate = lulzprime.forecast(100)   # ~540-545 (approximate, not exact)
 # ⚠️  Use resolve() for exact primes, forecast() is for navigation only
+
+# Example 6: Batch resolution for efficiency (Tier A: Exact, with π(x) caching)
+indices = [1, 10, 100, 50, 25]
+primes = lulzprime.resolve_many(indices)
+# Returns: [2, 29, 541, 229, 97] (order preserved, faster than loop)
 ```
 
 ## Public API
 
+**Core Functions:**
 - **`resolve(index)`** → Returns the exact p_index (Tier A: Exact)
 - **`forecast(index)`** → Returns an analytic estimate for p_index (Tier C: Estimate)
 - **`between(x, y)`** → Returns all primes in [x, y] (Tier B: Verified)
@@ -81,7 +87,11 @@ estimate = lulzprime.forecast(100)   # ~540-545 (approximate, not exact)
 - **`is_prime(n)`** → Primality predicate (Tier B: Verified)
 - **`simulate(...)`** → OMPC simulator for pseudo-prime sequences (optional mode)
 
-See `docs/manual/part_4.md` for complete API contracts.
+**Batch API (efficient multi-resolution):**
+- **`resolve_many(indices)`** → Batch resolve with π(x) caching (Tier A: Exact)
+- **`between_many(ranges)`** → Batch range queries (Tier B: Verified)
+
+See `docs/api_contract.md` for complete API contracts and guarantee specifications.
 
 ## Core Concepts
 

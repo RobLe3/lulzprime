@@ -504,7 +504,87 @@ End of milestones log.
 
 **Status:** Public API contract hardened, usage boundaries explicit, misuse cases documented
 
-**Commit/Tag:** [pending - harden-api-contract]
+**Commit/Tag:** 6fcc6c1
+
+---
+
+### Batch Resolver API with Deterministic Caching – 2025-12-17
+
+**Goals:** G2 (Hardware Efficiency), G3 (Determinism), G6 (Maintainability)
+
+**Deliverable:**
+- Implemented batch-friendly API layer for efficient multi-resolution operations
+- Added resolve_many() and between_many() with π(x) caching optimization
+- Maintained Tier A/B guarantees for all batch operations
+- No changes to existing public APIs
+
+**Verification:**
+- **New Module:** src/lulzprime/batch.py
+  - resolve_many(indices): Tier A exact results with order preservation
+  - between_many(ranges): Tier B verified results
+  - Internal π(x) caching (no global state, cache per batch execution only)
+  - Sorts indices internally to optimize π(x) reuse
+
+- **Files Modified:**
+  - src/lulzprime/__init__.py: Added batch exports
+  - docs/api_contract.md: Added batch function specifications
+  - README.md: Added batch example
+
+- **Tests Added:** tests/test_batch.py (33 new tests)
+  - Correctness: verify matches individual resolve() calls
+  - Order preservation: results match input order
+  - Determinism: same inputs yield same outputs
+  - Input validation: bad types, negative indices rejected
+  - Duplicates: allowed and handled correctly
+  - Batch sizes: small (10), medium (100) tested
+  - Edge cases: empty batches, single elements, overlapping ranges
+
+**Batch API Guarantees:**
+
+**resolve_many(indices):**
+- Tier A (Exact): Each result is exact p_index
+- Deterministic and order-preserving
+- Optimization: internally sorts + caches π(x) within batch
+- No persistent global state
+- Practical limit: ~100 indices per batch
+
+**between_many(ranges):**
+- Tier B (Verified): All returned primes verified
+- Deterministic and order-preserving
+- Each range processed independently
+- Practical limit: ~100 ranges per batch
+
+**Optimization Strategy:**
+- Sort indices internally to minimize π(x) recomputation
+- Simple dict cache for π(x) within single batch execution
+- Cache discarded after batch completes (no global state)
+- Temporarily patches pi() function during batch execution
+
+**Goal Alignment:**
+- G2 (Hardware Efficiency): Batch caching reduces π(x) overhead
+- G3 (Determinism): All batch operations deterministic
+- G6 (Maintainability): Clean additive API, no changes to existing functions
+
+**Test Status:**
+- 88/88 tests passing (55 original + 33 batch = 100% pass rate)
+- No regressions in existing tests
+- Comprehensive validation of determinism, order preservation, correctness
+
+**Performance Characteristics:**
+- Small batches (< 10): similar to loop
+- Medium batches (10-100): faster than loop (π(x) caching benefit)
+- Speedup depends on index locality (sorted indices share π(x) work)
+- Memory: O(batch_size) for results + O(π(x) calls) for cache
+
+**Impact:**
+- Day-to-day scripting: batch operations now efficient
+- Tier guarantees unchanged: resolve_many() is Tier A exact
+- No global caches or persistent state (per Part 6 constraints)
+- Clean integration with existing API
+
+**Status:** Batch API implemented, tested, documented, ready for use
+
+**Commit/Tag:** [pending - add-batch-api]
 
 ---
 
