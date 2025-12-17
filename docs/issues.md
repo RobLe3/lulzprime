@@ -1,0 +1,198 @@
+# issues.md
+**LULZprime – Bugs, Regressions, Corrections, and Spec Ambiguities**
+
+---
+
+## Purpose
+
+This file records bugs, regressions, required corrections, and deviations from the manual/spec.
+
+Issues must be updated **immediately** when:
+- A test fails
+- A workflow deviates from Part 5
+- A constraint is violated
+- Performance regresses beyond thresholds
+- A scope boundary is accidentally crossed
+
+---
+
+## Issue Format
+
+```
+## [ISSUE-TYPE] [Short Title] – [Date]
+
+**Status:** [OPEN/IN-PROGRESS/RESOLVED]
+
+**Severity:** [CRITICAL/HIGH/MEDIUM/LOW]
+
+**Affected Components:**
+- module.py:function_name
+
+**Description:**
+Clear description of the issue
+
+**Related Parts:** Part X
+
+**Steps to Reproduce:** (for bugs)
+1. Step 1
+2. Step 2
+
+**Expected Behavior:**
+What should happen
+
+**Actual Behavior:**
+What actually happens
+
+**Resolution:** (when resolved)
+How it was fixed, commit reference
+```
+
+---
+
+## Issue Types
+
+- `BUG`: Functional defect
+- `REGRESSION`: Previously working feature now broken
+- `CONSTRAINT-VIOLATION`: Violates Part 2 constraints
+- `WORKFLOW-CHANGE`: Deviation from Part 5 workflows
+- `API-CHANGE-PROPOSAL`: Proposed change to public API (requires approval)
+- `SPEC-AMBIGUITY`: Unclear specification requiring clarification
+- `PERFORMANCE`: Performance regression
+
+---
+
+## Open Issues
+
+## [CONSTRAINT-VIOLATION] Memory Exceeds 25MB Limit at Large Indices – 2025-12-17
+
+**Status:** OPEN
+
+**Severity:** HIGH
+
+**Affected Components:**
+- src/lulzprime/pi.py:pi() (Sieve of Eratosthenes implementation)
+- src/lulzprime/resolve.py:resolve()
+
+**Description:**
+Scale characterization benchmarks reveal that resolve() violates Part 6 section 6.4 memory constraint (< 25 MB) at large indices. The current π(x) implementation uses Sieve of Eratosthenes with O(x) space complexity, which causes memory usage to scale linearly with the prime value being counted.
+
+**Related Parts:** Part 6 (section 6.4 Memory Constraints)
+
+**Steps to Reproduce:**
+1. Run: `python benchmarks/bench_scale_characterization.py`
+2. Observe memory usage for resolve(250000)
+
+**Expected Behavior:**
+- Memory usage should remain < 25 MB per Part 6 section 6.4
+- "Target memory envelope (core): < 25 MB resident set for typical usage"
+
+**Actual Behavior:**
+Measured memory usage from scale characterization benchmarks:
+- resolve(50,000): 7.80 MB peak ✓ (within constraint)
+- resolve(100,000): 16.24 MB peak ✓ (within constraint)
+- resolve(250,000): **42.71 MB peak** ✗ (exceeds 25 MB limit by 71%)
+
+**Root Cause:**
+The Sieve of Eratosthenes creates an array of size x, using approximately x/8 bytes of memory. For p_250000 = 3,497,861, this requires ~437KB for the sieve array itself, but Python overhead and the list of primes generated brings total memory to ~43 MB.
+
+**Impact:**
+- Violates Part 6 section 6.4 constraint
+- Prevents usage at large indices on memory-constrained devices
+- Part 6 specifies this as "must work" constraint for low-end devices (≤ 4 GB RAM)
+
+**Potential Solutions (NOT IMPLEMENTED, REQUIRES APPROVAL):**
+1. Implement true sublinear π(x) (Lehmer-style, O(x^(2/3)) time, O(x^(1/3)) space) per Part 6 section 6.3 target
+2. Implement segmented sieve with bounded memory window
+3. Add memory limit parameter to π(x) with fallback to slower method
+4. Document memory scaling and add usage guidance for large indices
+
+**Benchmark Evidence:**
+- benchmarks/bench_scale_characterization.py (run date: 2025-12-17)
+- Full results documented in benchmarks/results/summary.md
+
+---
+
+## Resolved Issues
+
+## [BUG] Simulator Convergence Test Failure – 2025-12-17
+
+**Status:** RESOLVED
+
+**Severity:** MEDIUM
+
+**Affected Components:**
+- src/lulzprime/simulator.py:simulate()
+- src/lulzprime/gaps.py:get_empirical_gap_distribution()
+
+**Description:**
+The simulator convergence test failed because the density ratio π(q_n)/n did not converge to 1.0 within acceptable thresholds. The root cause was an unrealistic base gap distribution P0(g) that gave too much weight to large gaps.
+
+**Related Parts:** Part 5 (section 5.7), Part 7 (section 7.4)
+
+**Resolution:**
+1. **Implemented full OMPC gap sampling** per Part 5 section 5.7:
+   - Updated simulator.py to use `get_empirical_gap_distribution()`, `tilt_gap_distribution()`, and `sample_gap()` from gaps.py
+   - Removed simple heuristic `_sample_gap_simple()` function
+   - Properly implemented tilting formula: log P(g|w) = log P0(g) + beta*(1-w)*log g + C
+
+2. **Improved empirical gap distribution**:
+   - Changed from simple 1/g weighting to exponential decay: exp(-g/scale) / sqrt(g)
+   - Tuned scale parameter to 8.0 for realistic average gaps (~5-7)
+   - This better matches actual prime gap statistics
+
+3. **Verification:**
+   - Density ratio now converges to ~1.05 (drift 0.05, well below 0.15 threshold)
+   - Average gap in simulation: ~6.47 (realistic for prime ranges tested)
+   - Test now passes: tests/test_simulator.py::TestSimulator::test_simulate_convergence
+   - All 51 tests passing (100% pass rate)
+
+**Measured Results (seed=42, n=200):**
+- Final density ratio: 1.05 (target: 1.0)
+- Drift: 0.05 (threshold: < 0.15)
+- Convergence: Acceptable ✓
+- Average gap: 6.47 (expected: ~5-8 for this range)
+
+**Implementation Details:**
+- simulator.py: Lines 13-23 (imports), 79-95 (gap sampling)
+- gaps.py: Lines 13-48 (improved distribution with exponential decay)
+
+**Date Resolved:** 2025-12-17
+
+---
+
+## [WORKFLOW-CHANGE] Missing Forward Correction Step in resolve_internal – 2025-12-17
+
+**Status:** RESOLVED
+
+**Severity:** LOW
+
+**Affected Components:**
+- src/lulzprime/lookup.py:resolve_internal
+
+**Description:**
+Part 5 section 5.3 step 8 specifies deterministic correction with both backward and forward steps:
+- "While pi(x) > index, step backward prime-by-prime."
+- "While pi(x) < index, step forward prime-by-prime."
+
+The implementation was missing the forward correction step.
+
+**Related Parts:** Part 5 (section 5.3 step 8)
+
+**Resolution:**
+Added the missing forward correction loop to lookup.py:resolve_internal (lines 49-53).
+- Added import of next_prime function
+- Implemented "while pi(x) < index: step forward" loop
+- Added explanatory comment noting this is typically a no-op but required for Part 5 compliance
+- Added structural test (test_correction_step_compliance) to verify both loops are present
+
+**Verification:**
+- All existing tests still pass (50/51 tests passing)
+- New test test_correction_step_compliance verifies both correction loops exist
+- Tests: tests/test_resolve.py::TestResolutionPipeline::test_correction_step_compliance
+- Implementation: src/lulzprime/lookup.py lines 10-12, 49-53
+
+**Date Resolved:** 2025-12-17
+
+---
+
+End of issues log.

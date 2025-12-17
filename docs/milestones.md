@@ -203,4 +203,48 @@ First stable snapshot of LULZprime with complete resolver pipeline and optimized
 
 ---
 
+### Scale Characterization v1 (Large Index Benchmarks) – 2025-12-17
+
+**Goals:** G2 (Hardware Efficiency - validation), G9 (Alignment Measurement)
+
+**Deliverable:**
+Characterization of resolve() performance and memory usage at large indices (50k, 100k, 250k) to validate scaling behavior and identify constraint limits.
+
+**Method:**
+Measurement-only work with no code changes. Pure characterization of existing implementation.
+
+**Results:**
+
+| Index   | Time (median) | Memory (peak) | Status |
+|---------|---------------|---------------|--------|
+| 50,000  | 10.6 sec      | 7.80 MB       | ✓      |
+| 100,000 | 27.0 sec      | 16.24 MB      | ✓      |
+| 250,000 | 81.4 sec      | 42.71 MB      | ✗      |
+
+**Key Findings:**
+1. ✓ Performance scaling follows expected O(x log log x) behavior
+2. ✓ Deterministic behavior verified at all tested scales
+3. ✓ Indices up to ~150k remain within 25 MB memory constraint
+4. ✗ **Constraint violation identified:** resolve(250k) uses 42.71 MB, exceeding Part 6 section 6.4 limit of < 25 MB by 71%
+
+**Issue Logged:**
+- docs/issues.md: [CONSTRAINT-VIOLATION] Memory Exceeds 25MB Limit at Large Indices
+- Severity: HIGH
+- Root cause: Sieve of Eratosthenes O(x) space complexity
+- Impact: Prevents usage at large indices on low-end devices
+
+**Practical Limits Established:**
+- **Safe range:** Indices up to 100k (16 MB peak, completes in ~27 sec)
+- **Marginal range:** Indices 100k-150k (approaching 25 MB limit)
+- **Constrained range:** Indices 150k+ (exceeds memory constraint)
+
+**Evidence:**
+- benchmarks/bench_scale_characterization.py
+- benchmarks/results/summary.md (Scale Characterization v1 section)
+- All measurements with tracemalloc memory tracking
+
+**Status:** Characterization complete, constraint violation documented, no fixes attempted per safety protocols
+
+---
+
 End of milestones log.

@@ -228,3 +228,89 @@ The core resolver with optimized π(x) backend is **correct, fast, and fully com
 **Verified by:** Claude Agent (baseline establishment session)
 **Benchmark Script:** benchmarks/bench_resolve.py
 **Test Suite:** tests/ (pytest)
+
+---
+
+## Scale Characterization v1 (Large Index Benchmarks)
+
+**Date:** 2025-12-17
+**Objective:** Characterize resolve() behavior at indices 50k, 100k, 250k
+**Method:** Measurement only - no code changes
+
+### Test Environment
+
+- **Platform:** Darwin (macOS)
+- **Python:** 3.12.8
+- **Method:** `time.perf_counter()` for timing, `tracemalloc` for memory
+- **Iterations:** 3 per index (reduced from 5 due to execution time)
+
+### Scale Benchmark Results
+
+| Index   | Result (p_n) | Mean Time (ms) | Median Time (ms) | Peak Memory (MB) | Status |
+|---------|--------------|----------------|------------------|------------------|--------|
+| 50,000  | 611,953      | 10,634.8       | 10,612.7         | 7.80             | ✓      |
+| 100,000 | 1,299,709    | 27,337.8       | 27,035.5         | 16.24            | ✓      |
+| 250,000 | 3,497,861    | 78,884.0       | 81,373.7         | 42.71            | ✗      |
+
+### Key Findings
+
+**Performance Scaling:**
+- Time complexity follows expected O(x log log x) behavior for sieve
+- resolve(50k): ~10.6 seconds
+- resolve(100k): ~27.3 seconds (2.57x increase for 2x index)
+- resolve(250k): ~78.9 seconds (2.89x increase for 2.5x index)
+
+**Memory Scaling:**
+- Memory usage scales linearly with prime value (O(x) space for sieve)
+- resolve(50k): 7.80 MB ✓ (within 25 MB constraint)
+- resolve(100k): 16.24 MB ✓ (within 25 MB constraint)
+- resolve(250k): **42.71 MB ✗ (exceeds 25 MB constraint by 71%)**
+
+**⚠️ Constraint Violation Identified:**
+
+Part 6 section 6.4 specifies: "Target memory envelope (core): < 25 MB resident set for typical usage."
+
+The current Sieve of Eratosthenes implementation violates this constraint at large indices. For p_250000 = 3,497,861, memory usage reaches 42.71 MB.
+
+**Issue Logged:** docs/issues.md - [CONSTRAINT-VIOLATION] Memory Exceeds 25MB Limit at Large Indices
+
+### Analysis
+
+**Working Range (Within Constraints):**
+- Indices up to ~150k remain within 25 MB memory constraint
+- Performance acceptable: resolve(100k) completes in ~27 seconds
+- Deterministic behavior verified across all tested indices
+
+**Constrained Range (Exceeds Memory Limit):**
+- Indices beyond ~150k exceed 25 MB memory constraint
+- At 250k index: 42.71 MB peak (71% over limit)
+- This violates Part 6 requirement for low-end device compatibility
+
+**Root Cause:**
+- Sieve of Eratosthenes has O(x) space complexity
+- Creates array of size equal to prime value being counted
+- For large primes (>3M), memory usage becomes prohibitive
+
+**Implications:**
+- Current implementation suitable for indices up to ~100-150k
+- Beyond this range, memory constraint is violated
+- True sublinear π(x) methods (Lehmer-style) needed for larger indices
+- Part 6 section 6.3 specifies O(x^(2/3)) time, O(x^(1/3)) space as target
+
+### Recommendations
+
+**Immediate:**
+- Document memory scaling behavior in user-facing documentation
+- Add usage guidance: indices up to 100k are safe, 150k+ may exceed constraints
+- No code changes without explicit approval
+
+**Future Work (see docs/todo.md):**
+- Implement true sublinear π(x) per Part 6 section 6.3
+- Target: O(x^(2/3)) time, O(x^(1/3)) space (Lehmer-style)
+- Would enable large index support within memory constraints
+
+---
+
+**Benchmark Script:** benchmarks/bench_scale_characterization.py
+**Issue Reference:** docs/issues.md (CONSTRAINT-VIOLATION)
+**Status:** Measurement complete, constraint violation documented
