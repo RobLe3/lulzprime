@@ -164,4 +164,43 @@ methods (Lehmer-style, O(x^(2/3))) remain future work per docs/todo.md.
 
 ---
 
+### Snapshot 1: Verified Resolver + Optimized Linear π(x) – 2025-12-17
+
+**Tag:** v0.1.0-snapshot.1
+**Commit:** 8ce44e6be862070b9b6010fdcaa481c0028911a1
+
+**Status:** Production-ready snapshot with verified correctness and optimized performance
+
+**Summary:**
+First stable snapshot of LULZprime with complete resolver pipeline and optimized π(x) backend.
+
+**Test Status:**
+- 52/52 tests passing (100% pass rate)
+- All Tier A, B, C guarantees verified
+- Full Part 5 workflow compliance
+- Zero open issues
+
+**Performance Characteristics:**
+- resolve(10000): 164ms (21.7x faster than baseline)
+- π(x) backend: Sieve of Eratosthenes O(x log log x)
+- Memory: < 25MB (Part 2 constraint satisfied)
+
+**Evidence:**
+- Benchmark results: benchmarks/results/summary.md
+- Test suite: tests/ (pytest -q shows 52 passed)
+- Milestone documentation: Complete with before/after comparisons
+
+**Components:**
+- Core resolver: src/lulzprime/resolve.py, lookup.py, forecast.py
+- Prime counting: src/lulzprime/pi.py (optimized linear via sieve)
+- Primality testing: src/lulzprime/primality.py (deterministic Miller-Rabin)
+- OMPC simulator: src/lulzprime/simulator.py, gaps.py
+
+**Known Limitations:**
+- π(x) is optimized linear (O(x log log x)), not true sublinear
+- True sublinear methods (Lehmer-style, O(x^(2/3))) remain future work
+- See docs/todo.md for roadmap
+
+---
+
 End of milestones log.
