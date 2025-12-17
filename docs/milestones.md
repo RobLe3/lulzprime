@@ -311,7 +311,7 @@ End of milestones log.
 
 **Status:** Memory constraint violation RESOLVED. Production-ready for low-end devices.
 
-**Commit/Tag:** [to be added]
+**Commit/Tag:** e3845c1
 
 ---
 
