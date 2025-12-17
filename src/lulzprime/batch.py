@@ -11,8 +11,9 @@ Canonical reference: paper/OMPC_v1.33.7lulz.pdf
 
 from typing import Iterable
 from .utils import validate_index, validate_range
-from .lookup import resolve_internal
+from .lookup import resolve_internal_with_pi
 from .resolve import between as _between
+from .pi import pi as default_pi
 
 
 def resolve_many(indices: Iterable[int]) -> list[int]:
@@ -95,11 +96,16 @@ def resolve_many(indices: Iterable[int]) -> list[int]:
     results_with_pos = []
     pi_cache = {}  # Simple dict cache for π(x) within this batch
 
+    # Create cached pi function (local closure, no global state)
+    def cached_pi(x: int) -> int:
+        """Local cached wrapper for π(x) within this batch."""
+        if x not in pi_cache:
+            pi_cache[x] = default_pi(x)
+        return pi_cache[x]
+
     for original_pos, index in sorted_pairs:
-        # Resolve using internal pipeline (which will call π(x) multiple times)
-        # The π(x) function will be called from resolve_internal -> binary_search_pi
-        # We patch pi() temporarily to use our cache
-        result = _resolve_with_pi_cache(index, pi_cache)
+        # Resolve using dependency injection (no global patching)
+        result = resolve_internal_with_pi(index, cached_pi)
         results_with_pos.append((original_pos, result))
 
     # Restore original order
@@ -172,36 +178,3 @@ def between_many(ranges: Iterable[tuple[int, int]]) -> list[list[int]]:
     return results
 
 
-def _resolve_with_pi_cache(index: int, pi_cache: dict) -> int:
-    """
-    Internal helper: resolve with π(x) caching.
-
-    This temporarily patches the pi() function to use a cache,
-    then calls resolve_internal() which will benefit from cached π(x) values.
-
-    Args:
-        index: Prime index to resolve
-        pi_cache: Dictionary cache for π(x) values
-
-    Returns:
-        Exact p_index
-    """
-    from . import pi as pi_module
-
-    # Save original pi function
-    original_pi = pi_module.pi
-
-    # Create cached wrapper
-    def cached_pi(x: int) -> int:
-        if x not in pi_cache:
-            pi_cache[x] = original_pi(x)
-        return pi_cache[x]
-
-    # Temporarily replace pi() with cached version
-    try:
-        pi_module.pi = cached_pi
-        result = resolve_internal(index)
-        return result
-    finally:
-        # Always restore original pi function
-        pi_module.pi = original_pi

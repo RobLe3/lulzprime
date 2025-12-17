@@ -244,8 +244,11 @@ Not suitable for cryptographic applications. Use established cryptographic libra
 
 **Optimization Strategy:**
 - Internally sorts indices to minimize π(x) recomputation
-- Caches π(x) results within this single batch execution
-- No persistent global cache (cache discarded after return)
+- Caches π(x) results within this single batch execution using local closure
+- Dependency injection: passes cached π(x) function to internal resolver
+- No global state mutation or monkeypatching
+- No persistent cache (cache discarded after return)
+- Thread-safe by design (no shared mutable state)
 - Speedup depends on index locality (sorted indices share π(x) work)
 
 **Performance Envelope:**

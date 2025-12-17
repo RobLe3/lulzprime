@@ -273,3 +273,70 @@ class TestBetweenManyEdgeCases:
         ranges = [(23, 23), (29, 29)]
         result = between_many(ranges)
         assert result == [[23], [29]]
+
+
+class TestResolveManyNoGlobalMutation:
+    """Test that resolve_many does not mutate global state."""
+
+    def test_no_global_pi_mutation(self):
+        """Verify resolve_many does not mutate the global pi() function."""
+        from lulzprime import pi as pi_module
+
+        # Get identity of original pi function
+        original_pi = pi_module.pi
+        original_id = id(original_pi)
+
+        # Call resolve_many
+        indices = [1, 10, 100, 50, 25]
+        result = resolve_many(indices)
+
+        # Verify pi() is unchanged
+        assert pi_module.pi is original_pi, "Global pi() function was mutated"
+        assert id(pi_module.pi) == original_id, "Global pi() identity changed"
+
+        # Verify results are correct despite no mutation
+        expected = [lulzprime.resolve(i) for i in indices]
+        assert result == expected
+
+    def test_consecutive_calls_no_state(self):
+        """Verify consecutive resolve_many calls don't interfere."""
+        from lulzprime import pi as pi_module
+
+        # Get original pi
+        original_pi = pi_module.pi
+
+        # First call
+        indices1 = [1, 2, 3, 4, 5]
+        result1 = resolve_many(indices1)
+
+        # Verify pi unchanged after first call
+        assert pi_module.pi is original_pi, "pi() changed after first call"
+
+        # Second call with different indices
+        indices2 = [10, 20, 30]
+        result2 = resolve_many(indices2)
+
+        # Verify pi unchanged after second call
+        assert pi_module.pi is original_pi, "pi() changed after second call"
+
+        # Verify both results are correct
+        expected1 = [2, 3, 5, 7, 11]
+        expected2 = [29, 71, 113]
+        assert result1 == expected1
+        assert result2 == expected2
+
+    def test_sentinel_wrapper_not_leaked(self):
+        """Verify no internal cached wrappers leak to global scope."""
+        from lulzprime import pi as pi_module
+
+        # Get original pi
+        original_pi = pi_module.pi
+        original_name = original_pi.__name__
+
+        # Call resolve_many
+        resolve_many([1, 10, 100])
+
+        # Verify pi is still the original function, not a wrapper
+        assert pi_module.pi is original_pi
+        assert pi_module.pi.__name__ == original_name
+        assert "cached" not in pi_module.pi.__name__.lower()
