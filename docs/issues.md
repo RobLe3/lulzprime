@@ -117,13 +117,31 @@ Scale characterization benchmarks at resolve(500,000) and resolve(1,000,000) exc
    - Parallel segment processing
    - Would require benchmark policy approval for parallel execution
 
+**Optimization Attempts (2025-12-17):**
+1. **Instrumentation and Analysis:**
+   - Added ResolveStats for diagnostic tracking of π(x) calls
+   - Measured: 22-25 π(x) calls per resolve at 50k-250k indices
+   - Identified binary search as consuming 80% of π(x) calls (17-20 iterations)
+
+2. **Tighter Bounds Optimization:**
+   - Reduced binary search bounds from ±10-20% to ±5% around forecast
+   - Leverages forecast accuracy (<1% typical error)
+   - Result: Reduced π(x) calls by 1-2 per resolve (4-8% reduction)
+   - Performance improvement: 7.7% average speedup
+   - Insufficient: 500k problem remains (30 min → ~27.7 min, still impractical)
+
+3. **Conclusion:**
+   - Further iteration reduction won't solve the problem
+   - Bottleneck is π(x) cost per call (O(x log log x)), not call count
+   - Confirms Phase 2 (sublinear π(x)) is necessary for 500k+
+
 **Benchmark Policy Compliance:**
 - docs/benchmark_policy.md now enforces 60-second default time cap
 - Stress benchmarks (500k+) require explicit approval in docs/milestones.md
 - Default benchmark set restricted to 50k, 100k, 250k (all complete within caps)
 - This issue logged per policy requirement
 
-**Status:** Documented as known limitation. Phase 2 sublinear π(x) remains future work per docs/todo.md.
+**Status:** Documented as known limitation. 7.7% improvement achieved but insufficient. Phase 2 sublinear π(x) remains future work per docs/todo.md.
 
 ---
 

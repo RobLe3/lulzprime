@@ -10,6 +10,7 @@ IMPORTANT: Diagnostics must observe only. They must never alter computational re
 """
 
 from typing import Any, Callable
+from dataclasses import dataclass, field
 
 
 def verify_resolution(result: int, index: int, pi_func: Callable, is_prime_func: Callable) -> bool:
@@ -169,3 +170,62 @@ def simulator_diagnostics(sequence: list[int], pi_func: Callable) -> dict[str, A
         'convergence_acceptable': drift < 0.15,  # Threshold from paper
         'checkpoints': checkpoints,
     }
+
+
+@dataclass
+class ResolveStats:
+    """
+    Statistics collector for resolve() internal operations.
+
+    Tracks performance-relevant metrics during resolution without altering results.
+    Disabled by default - must be explicitly threaded via dependency injection.
+
+    Attributes:
+        pi_calls: Number of π(x) function calls during resolution
+        binary_search_iterations: Number of binary search iterations
+        correction_backward_steps: Number of backward correction steps
+        correction_forward_steps: Number of forward correction steps
+        forecast_value: Initial forecast estimate
+        final_result: Final resolved prime value
+    """
+    pi_calls: int = 0
+    binary_search_iterations: int = 0
+    correction_backward_steps: int = 0
+    correction_forward_steps: int = 0
+    forecast_value: int = 0
+    final_result: int = 0
+
+    def increment_pi_calls(self) -> None:
+        """Record a π(x) function call."""
+        self.pi_calls += 1
+
+    def increment_binary_iterations(self) -> None:
+        """Record a binary search iteration."""
+        self.binary_search_iterations += 1
+
+    def increment_backward_steps(self) -> None:
+        """Record a backward correction step."""
+        self.correction_backward_steps += 1
+
+    def increment_forward_steps(self) -> None:
+        """Record a forward correction step."""
+        self.correction_forward_steps += 1
+
+    def set_forecast(self, value: int) -> None:
+        """Record forecast value."""
+        self.forecast_value = value
+
+    def set_result(self, value: int) -> None:
+        """Record final result."""
+        self.final_result = value
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert stats to dictionary for reporting."""
+        return {
+            'pi_calls': self.pi_calls,
+            'binary_search_iterations': self.binary_search_iterations,
+            'correction_backward_steps': self.correction_backward_steps,
+            'correction_forward_steps': self.correction_forward_steps,
+            'forecast_value': self.forecast_value,
+            'final_result': self.final_result,
+        }

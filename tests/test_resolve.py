@@ -7,6 +7,8 @@ Verifies workflow from docs/manual/part_5.md section 5.3.
 import pytest
 import lulzprime
 from lulzprime.pi import pi
+from lulzprime.diagnostics import ResolveStats
+from lulzprime.lookup import resolve_internal_with_pi
 
 
 class TestResolve:
@@ -88,12 +90,89 @@ class TestResolutionPipeline:
         source = inspect.getsource(resolve_internal_with_pi)
 
         # Verify both correction loops are present
-        # (uses pi_fn instead of pi due to dependency injection)
-        assert "while pi_fn(x) > index:" in source, \
-            "Missing backward correction: 'while pi_fn(x) > index'"
-        assert "while pi_fn(x) < index:" in source, \
-            "Missing forward correction: 'while pi_fn(x) < index'"
+        # (uses counted_pi_fn which wraps pi_fn for stats tracking)
+        assert "while counted_pi_fn(x) > index:" in source, \
+            "Missing backward correction: 'while counted_pi_fn(x) > index'"
+        assert "while counted_pi_fn(x) < index:" in source, \
+            "Missing forward correction: 'while counted_pi_fn(x) < index'"
 
         # Verify they use the correct navigation functions
         assert "prev_prime" in source, "Missing prev_prime for backward correction"
         assert "next_prime" in source, "Missing next_prime for forward correction"
+
+
+class TestResolveInstrumentation:
+    """Test resolve() instrumentation with ResolveStats."""
+
+    def test_stats_no_change_to_output(self):
+        """Verify stats collection doesn't alter results."""
+        index = 100
+
+        # Resolve without stats
+        result_no_stats = lulzprime.resolve(index)
+
+        # Resolve with stats
+        stats = ResolveStats()
+        result_with_stats = resolve_internal_with_pi(index, pi, stats)
+
+        # Results must be identical
+        assert result_with_stats == result_no_stats == 541
+
+    def test_stats_deterministic(self):
+        """Verify stats are deterministic for same input."""
+        index = 100
+
+        # Run twice with stats
+        stats1 = ResolveStats()
+        result1 = resolve_internal_with_pi(index, pi, stats1)
+
+        stats2 = ResolveStats()
+        result2 = resolve_internal_with_pi(index, pi, stats2)
+
+        # Results must match
+        assert result1 == result2
+
+        # Stats must match
+        assert stats1.pi_calls == stats2.pi_calls
+        assert stats1.binary_search_iterations == stats2.binary_search_iterations
+        assert stats1.correction_backward_steps == stats2.correction_backward_steps
+        assert stats1.correction_forward_steps == stats2.correction_forward_steps
+        assert stats1.forecast_value == stats2.forecast_value
+        assert stats1.final_result == stats2.final_result
+
+    def test_stats_pi_calls_counted(self):
+        """Verify π(x) calls are counted."""
+        index = 50
+        stats = ResolveStats()
+        result = resolve_internal_with_pi(index, pi, stats)
+
+        # Should have made some pi calls
+        assert stats.pi_calls > 0
+        # Binary search should have run
+        assert stats.binary_search_iterations > 0
+        # Result should be set
+        assert stats.final_result == result
+
+    def test_stats_to_dict(self):
+        """Verify stats.to_dict() works."""
+        index = 100
+        stats = ResolveStats()
+        resolve_internal_with_pi(index, pi, stats)
+
+        stats_dict = stats.to_dict()
+
+        assert 'pi_calls' in stats_dict
+        assert 'binary_search_iterations' in stats_dict
+        assert 'correction_backward_steps' in stats_dict
+        assert 'correction_forward_steps' in stats_dict
+        assert 'forecast_value' in stats_dict
+        assert 'final_result' in stats_dict
+
+        assert stats_dict['final_result'] == 541
+
+    def test_stats_disabled_by_default(self):
+        """Verify stats are disabled by default (None)."""
+        # Should work fine without stats parameter
+        index = 25
+        result = resolve_internal_with_pi(index, pi)
+        assert result == 97

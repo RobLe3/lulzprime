@@ -975,5 +975,120 @@ Parallel π(x) implementation is correct and deterministic, but multiprocessing 
 
 ---
 
+### Resolve() Instrumentation and π(x) Call Reduction – 2025-12-17
+
+**Goals:** G2 (Hardware Efficiency), G3 (Determinism), G6 (Maintainability)
+
+**Deliverable:**
+- Added opt-in instrumentation to resolve() pipeline for performance diagnostics
+- Identified π(x) call count as bottleneck (22-25 calls per resolve)
+- Implemented tighter binary search bounds to reduce π(x) calls
+- Achieved 7.7% average speedup through deterministic optimization
+
+**Problem:**
+resolve(500k+) exceeds acceptable runtime (30+ minutes per benchmark policy).
+Need to diagnose where time is spent and reduce computational overhead.
+
+**Solution:**
+1. **Instrumentation (measurement-only):**
+   - Created ResolveStats dataclass in diagnostics.py
+   - Threaded via dependency injection (no global state)
+   - Tracks: pi_calls, binary_search_iterations, correction_forward_steps, correction_backward_steps
+   - Disabled by default (opt-in via stats parameter)
+
+2. **Diagnostic Benchmark:**
+   - Created benchmarks/bench_resolve_stats.py
+   - Measured indices: 50k, 100k, 250k (policy default set)
+   - Identified dominant contributor: 22-25 π(x) calls per resolve
+   - Binary search uses 17-20 iterations (80% of π(x) calls)
+
+3. **Optimization (deterministic):**
+   - Tightened binary search bounds from ±10-20% to ±5%
+   - Leverages forecast accuracy (<1% typical error)
+   - Reduces binary search iterations by 1-2 per resolve
+   - Reduces π(x) calls by 1-2 per resolve (4-8% reduction)
+
+**Verification:**
+
+- **Test Results:** 113/113 tests passing (100% pass rate)
+  - 5 new tests for instrumentation (test_resolve.py)
+  - All existing tests pass (no regressions)
+  - Determinism verified: same inputs → same stats
+
+- **Diagnostic Measurements (Before Optimization):**
+  - Index 50k: 22 π(x) calls, 17 binary iters, 2.22s
+  - Index 100k: 24 π(x) calls, 19 binary iters, 5.12s
+  - Index 250k: 25 π(x) calls, 20 binary iters, 15.25s
+  - Average: 23.7 π(x) calls, 18.7 binary iters, 7.53s
+
+- **Performance After Optimization:**
+  - Index 50k: 21 π(x) calls, 16 binary iters, 2.05s (7.7% faster)
+  - Index 100k: 22 π(x) calls, 17 binary iters, 4.72s (7.8% faster)
+  - Index 250k: 23 π(x) calls, 18 binary iters, 14.10s (7.5% faster)
+  - **Average improvement: 7.7% speedup**
+
+**Implementation Details:**
+
+- **Files Modified:**
+  - src/lulzprime/diagnostics.py: Added ResolveStats dataclass (+60 LOC)
+  - src/lulzprime/lookup.py: Added stats parameter to resolve_internal_with_pi and _binary_search_pi
+  - src/lulzprime/lookup.py: Tightened bounds from 0.9×/formula to 0.95×/1.05×
+  - tests/test_resolve.py: Added TestResolveInstrumentation class (+74 LOC, 5 tests)
+  - benchmarks/bench_resolve_stats.py: New diagnostic benchmark script
+
+- **Optimization Code Change:**
+  ```python
+  # Before:
+  lo = max(2, int(guess * 0.9))  # 10% below
+  hi = int(n * (log n + log log n) * 1.1)  # Analytic formula
+
+  # After:
+  lo = max(2, int(guess * 0.95))  # 5% below
+  hi = int(guess * 1.05)           # 5% above
+  ```
+
+**Key Insights:**
+
+1. **Forecast Accuracy:** forecast() is very accurate (0.3% typical error at 50k-250k)
+2. **Binary Search Dominance:** 80% of π(x) calls happen during binary search
+3. **Correction Steps:** 0 correction steps needed (binary search finds exact boundary)
+4. **Bottleneck:** Each π(x) call is expensive (O(x log log x)), not the number of calls
+5. **Optimization Limit:** Further reducing iterations won't help much (need faster π(x))
+
+**Goal Alignment:**
+- G2 (Hardware Efficiency): 7.7% speedup through algorithmic improvement
+- G3 (Determinism): All optimizations deterministic, reproducible
+- G6 (Maintainability): Clean instrumentation via dependency injection
+
+**Guarantees Preserved:**
+- ✅ Tier A exact results (all tests pass)
+- ✅ Determinism (same inputs → same outputs)
+- ✅ No API changes (internal optimization only)
+- ✅ No global state (stats threaded via parameters)
+
+**Impact:**
+- Provides diagnostic tools for future performance work
+- 7.7% speedup is modest but deterministic and zero-risk
+- Evidence that further iteration reduction won't solve 500k problem
+- Confirms that Phase 2 (sublinear π(x)) is needed for 500k+ indices
+
+**Limitations:**
+- 7.7% speedup insufficient for 500k problem (30 min → 27.7 min)
+- Binary search already optimal (can't reduce iterations further)
+- Root cause: π(x) is O(x log log x), not the number of calls
+- True solution: Phase 2 Lehmer-style sublinear π(x)
+
+**Status:** Instrumentation complete, optimization implemented, measured improvement documented
+
+**Commit/Tag:** [pending]
+
+**References:**
+- Diagnostic results: benchmarks/results/resolve_stats.md (before)
+- Optimized results: benchmarks/results/resolve_stats_optimized.md (after)
+- Benchmark policy: docs/benchmark_policy.md (time caps enforced)
+- Performance issue: docs/issues.md (PERFORMANCE at 500k remains open)
+
+---
+
 End of milestones log.
 
