@@ -197,7 +197,7 @@ All documentation inaccuracies corrected in Scale Characterization v3 audit.
 - Practical limits documented: viable up to ~250k indices
 
 **Date Resolved:** 2025-12-17
-**Commit:** [to be added]
+**Commit:** cbd8802
 
 ---
 

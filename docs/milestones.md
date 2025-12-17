@@ -357,7 +357,7 @@ End of milestones log.
 
 **Status:** Documentation corrected, practical limits documented, audit complete.
 
-**Commit/Tag:** [to be added]
+**Commit/Tag:** cbd8802
 
 ---
 
