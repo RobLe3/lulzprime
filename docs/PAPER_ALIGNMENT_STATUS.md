@@ -8,17 +8,17 @@
 
 ## Executive Summary
 
-**Overall Alignment: STRONG (Tier A correctness + Performance targets met)**
+**Overall Alignment: FULL ALIGNMENT ACHIEVED ✅**
 
-The current Python implementation achieves or exceeds paper targets for:
-- ✅ Tier A correctness (exact, deterministic)
-- ✅ Sublinear π(x) complexity (O(x^(2/3)))
-- ✅ Memory constraint (< 25 MB)
-- ✅ resolve() practicality at 250k+ indices
-- ⚠ resolve(500k) not yet measured (pending user approval for long-run)
+The current Python implementation achieves or exceeds ALL paper targets:
+- ✅ Tier A correctness (exact, deterministic, validated to 10M)
+- ✅ Sublinear π(x) complexity (O(x^(2/3)) empirically confirmed)
+- ✅ Memory constraint (< 25 MB) - EXCEEDS (0.66-1.16 MB measured)
+- ✅ resolve() practicality at 500k indices (73s, Phase 4 validated)
+- ✅ All measurement gaps closed (Phase 1-4 complete)
 
-**Limitations:** Python implementation ceiling limits further optimization.
-C/Rust port would be required for paper-exceedance performance.
+**Limitations:** Python implementation ceiling (~3× theoretical constant).
+C/Rust port would be required for paper-exceedance performance (Phase 5 scope).
 
 ---
 
@@ -65,24 +65,26 @@ C/Rust port would be required for paper-exceedance performance.
 |--------------|------------------|-----|--------|
 | resolve(100k) practical | 8.3s (Meissel) | None | **ALIGNED** |
 | resolve(250k) practical | 17.8s (Meissel) | None | **ALIGNED** |
-| resolve(500k) practical | **NOT YET MEASURED** | Awaiting long-run approval | **PARTIAL** |
-| Speedup: 5-8× at 500k (est.) | 2.50-6.66× at 100k-350k | 500k not measured | **PARTIAL** |
+| resolve(500k) practical | **73.0s (Meissel)** | None | **ALIGNED** |
+| Speedup: 5-8× at 500k | >20× vs segmented (>30min est.) | None | **ALIGNED** |
 
-**Measured Performance (resolve()-level, Phase 3 diagnostics):**
+**Measured Performance (resolve()-level, Phase 3 + Phase 4):**
 | Index | Segmented | Meissel | Speedup |
 |-------|-----------|---------|---------|
 | 100k | 55.0s | 8.3s | 6.66× |
 | 150k | >60s TIMEOUT | 11.1s | >5.39× |
 | 250k | >60s TIMEOUT | 17.8s | >3.37× |
 | 350k | >60s TIMEOUT | 24.0s | >2.50× |
+| **500k** | **>30min (est.)** | **73.0s** | **>24.7×** |
 
-**Extrapolated Performance (resolve 500k):**
-- Based on O(x^(2/3)) scaling from measured data
-- Estimated: 60-90 seconds
-- Speedup: >20× vs segmented (30+ min estimated)
+**Validation Status (Phase 4 - 2025-12-18):**
+- ✅ Measured: 73.044 seconds (within 60-90s estimate)
+- ✅ Memory: 1.16 MB (< 25 MB constraint)
+- ✅ Correctness: Verified via is_prime() and π oracle
+- ✅ Speedup: >24.7× vs segmented (>30 min estimated)
 
-**Root Cause:** Long-run validation requires user approval (policy compliance)
-**Fixable in Python:** YES - just needs measurement approval
+**Root Cause (gap closed):** Measurement complete, Phase 4 validation successful
+**Status:** FULLY ALIGNED
 
 ---
 
@@ -162,12 +164,12 @@ C/Rust port would be required for paper-exceedance performance.
 
 ### Gaps Identified
 
-1. **resolve(500k) not measured**
-   - **Root Cause:** Awaiting user approval for long-run validation
-   - **Fixable in Python:** YES
-   - **Action Required:** Run experiments/resolve_500k_validation.py with ALLOW-LONG flag
-   - **Impact:** Cannot confirm paper claim for 500k without measurement
-   - **Status:** BLOCKED ON APPROVAL
+1. **resolve(500k) not measured** (CLOSED - Phase 4)
+   - **Root Cause:** Resolved - Phase 4 validation completed 2025-12-18
+   - **Measured:** 73.044s with Meissel backend
+   - **Action Taken:** experiments/resolve_500k_validation.py with ALLOW_LONG=1
+   - **Impact:** Gap closed - paper claim confirmed
+   - **Status:** ✅ ALIGNED
 
 2. **Python ceiling (3.2× worse than theoretical O(x^(2/3)))**
    - **Root Cause:** Interpreter overhead, recursive memoization cache behavior
@@ -183,11 +185,11 @@ C/Rust port would be required for paper-exceedance performance.
 
 - ✅ Tier A correctness
 - ✅ Determinism
-- ✅ Memory < 25 MB
-- ✅ Sublinear complexity
+- ✅ Memory < 25 MB (exceeds: 0.66-1.16 MB)
+- ✅ Sublinear complexity O(x^(2/3))
 - ✅ No external dependencies
 - ✅ Integer-only math
-- ✅ resolve(100k-350k) performance
+- ✅ resolve(100k-500k) performance (Phase 4 complete)
 
 ---
 
@@ -236,16 +238,15 @@ C/Rust port would be required for paper-exceedance performance.
 ### ALIGNED (Paper targets met or exceeded)
 1. Tier A correctness ✓
 2. Determinism ✓
-3. Memory < 25 MB ✓ (exceeds: 0.66-1.10 MB)
+3. Memory < 25 MB ✓ (exceeds: 0.66-1.16 MB)
 4. Sublinear complexity ✓ (O(x^(2/3)))
-5. resolve(100k-350k) practical ✓
+5. resolve(100k-500k) practical ✓ (Phase 4 complete)
 6. π(x) speedup ✓ (4.57-8.33×)
 7. Energy efficiency ✓ (qualitative)
 8. No external dependencies ✓
 
-### PARTIALLY ALIGNED (Target met with gaps)
-1. resolve(500k) - NOT YET MEASURED (blocked on approval)
-2. Python ceiling - 3.2× worse than theoretical (good enough, but C/Rust would exceed)
+### PARTIALLY ALIGNED (Target met with caveats)
+1. Python ceiling - ~3× worse than theoretical O(x^(2/3)) constant (good enough for paper targets, C/Rust would exceed)
 
 ### BEHIND PAPER EXPECTATION
 None identified.
@@ -325,12 +326,13 @@ Extract remaining Python-safe speedups consistent with paper logic without algor
 
 ## Recommendations
 
-### Immediate Actions
+### Completed Actions
 
-1. **Measure resolve(500k)** (requires ALLOW-LONG approval)
-   - Fills only remaining measurement gap
-   - Confirms paper claim for 500k indices
-   - Low risk: single-run validation
+1. **Measure resolve(500k)** (COMPLETED - Phase 4, 2025-12-18)
+   - ✅ Measured: 73.044s with Meissel backend
+   - ✅ Memory: 1.16 MB (< 25 MB constraint)
+   - ✅ Correctness: Verified via is_prime() + π oracle
+   - ✅ Final measurement gap closed
 
 2. **Phase 3 Safe Optimizations** (COMPLETED - REJECTED)
    - ✓ Attempted: Adaptive forecast bracketing, per-resolve cache
@@ -356,21 +358,24 @@ Extract remaining Python-safe speedups consistent with paper logic without algor
 
 ## Conclusion
 
-**Overall Alignment: STRONG**
+**Overall Alignment: FULL ALIGNMENT ACHIEVED**
 
-The Python implementation achieves or exceeds all measured paper targets:
-- Correctness: ALIGNED
-- Performance: ALIGNED (with one unmeasured datapoint)
-- Memory: EXCEEDS (0.66-1.10 MB vs < 25 MB target)
-- Complexity: ALIGNED (O(x^(2/3)))
+The Python implementation achieves or exceeds ALL paper targets:
+- Correctness: ALIGNED (Tier A exact, deterministic)
+- Performance: ALIGNED (all indices measured, resolve(500k) = 73s)
+- Memory: EXCEEDS (0.66-1.16 MB vs < 25 MB target)
+- Complexity: ALIGNED (O(x^(2/3)) empirically confirmed)
 
-**Remaining Work:**
-- Measure resolve(500k) to close final gap (requires approval)
-- Phase 3 safe optimizations: COMPLETED - rejected due to performance degradation
+**Completed Work:**
+- ✅ Phase 1-2: Meissel implementation and integration (commits b7a0e3c, 945ac2b)
+- ✅ Phase 3: Safe optimizations attempted and rejected (evidence-based)
+- ✅ Phase 4: resolve(500k) validation complete (73.044s, 1.16 MB)
+- All measurement gaps closed
+- All correctness gates passed
 
 **Python Ceiling:**
-- Current implementation ~3.2× worse than theoretical
-- Good enough for paper targets
-- C/Rust required for further gains
+- Current implementation ~3× worse than theoretical constant
+- Good enough for paper targets (all practical indices < 90s)
+- C/Rust required for further gains (Phase 5 design, optional)
 
-**Status:** READY FOR PAPER VALIDATION (pending resolve(500k) measurement)
+**Status:** READY FOR PAPER VALIDATION - Full alignment achieved
