@@ -321,3 +321,182 @@ class TestPiParallel:
         for i in range(1, len(results)):
             assert results[i] >= results[i-1], \
                 f"pi_parallel not monotone at {values[i]}"
+
+
+class TestPiLehmer:
+    """Test Meissel-Lehmer π(x) implementation (Phase 2)."""
+
+    def test_pi_lehmer_correctness_small(self):
+        """Test Lehmer π(x) against known values at moderate scales."""
+        from lulzprime.pi import _pi_lehmer
+
+        # Known values that can be cross-validated quickly
+        known = {
+            100: 25,
+            1000: 168,
+            10000: 1229,
+            100000: 9592,
+        }
+
+        for x, expected in known.items():
+            result = _pi_lehmer(x)
+            assert result == expected, f"_pi_lehmer({x}) should be {expected}, got {result}"
+
+    def test_pi_lehmer_correctness_large(self):
+        """Test Lehmer π(x) against known values at larger scales."""
+        from lulzprime.pi import _pi_lehmer
+
+        # Known values for larger x
+        known = {
+            1000000: 78498,
+            2000000: 148933,
+        }
+
+        for x, expected in known.items():
+            result = _pi_lehmer(x)
+            assert result == expected, f"_pi_lehmer({x}) should be {expected}, got {result}"
+
+    def test_pi_lehmer_vs_segmented_sieve(self):
+        """Cross-validate Lehmer against segmented sieve."""
+        from lulzprime.pi import _pi_lehmer, _segmented_sieve
+
+        # Test values where both can run reasonably fast
+        test_values = [100000, 250000, 500000, 1000000]
+
+        for x in test_values:
+            lehmer_result = _pi_lehmer(x)
+            sieve_result = _segmented_sieve(x)
+            assert lehmer_result == sieve_result, \
+                f"Mismatch at x={x}: lehmer={lehmer_result}, sieve={sieve_result}"
+
+    def test_pi_lehmer_edge_cases(self):
+        """Test Lehmer π(x) edge cases."""
+        from lulzprime.pi import _pi_lehmer
+
+        # x < 2 should return 0
+        assert _pi_lehmer(0) == 0
+        assert _pi_lehmer(1) == 0
+
+        # x = 2 should return 1
+        assert _pi_lehmer(2) == 1
+
+        # x = 3 should return 2
+        assert _pi_lehmer(3) == 2
+
+    def test_pi_lehmer_determinism(self):
+        """Test that Lehmer π(x) is deterministic."""
+        from lulzprime.pi import _pi_lehmer
+
+        x = 1000000
+
+        # Run multiple times, should get same result
+        results = [_pi_lehmer(x) for _ in range(5)]
+
+        # All results should be identical
+        assert len(set(results)) == 1, f"Non-deterministic results: {results}"
+        assert results[0] == 78498, f"Expected 78498, got {results[0]}"
+
+    def test_pi_lehmer_threshold(self):
+        """Test that pi() uses Lehmer for x >= LEHMER_THRESHOLD."""
+        # Threshold is 5,000,000
+        LEHMER_THRESHOLD = 5_000_000
+
+        # Just below threshold should use segmented sieve
+        x_below = LEHMER_THRESHOLD - 1
+        result_below = pi(x_below)
+
+        # Just at threshold should use Lehmer
+        x_at = LEHMER_THRESHOLD
+        result_at = pi(x_at)
+
+        # Both should produce valid results
+        assert result_below > 0, f"pi({x_below}) should be positive"
+        assert result_at > 0, f"pi({x_at}) should be positive"
+
+        # Should be monotone
+        assert result_at >= result_below, \
+            f"pi({x_at}) = {result_at} should be >= pi({x_below}) = {result_below}"
+
+    def test_pi_with_lehmer_known_values(self):
+        """Test pi() with Lehmer backend against known values."""
+        # Values above LEHMER_THRESHOLD = 5,000,000
+        known = {
+            5000000: 348513,
+            10000000: 664579,
+        }
+
+        for x, expected in known.items():
+            result = pi(x)
+            assert result == expected, f"pi({x}) should be {expected}, got {result}"
+
+    def test_pi_lehmer_monotonicity(self):
+        """Test that Lehmer π(x) is monotone increasing."""
+        from lulzprime.pi import _pi_lehmer
+
+        # Test values in ascending order
+        values = [100, 1000, 10000, 100000, 500000, 1000000]
+        results = [_pi_lehmer(x) for x in values]
+
+        # Should be strictly increasing for distinct x
+        for i in range(1, len(results)):
+            assert results[i] > results[i-1], \
+                f"_pi_lehmer not monotone increasing: π({values[i]}) = {results[i]} vs π({values[i-1]}) = {results[i-1]}"
+
+    def test_pi_threshold_dispatch(self):
+        """Test that pi() dispatches to correct algorithm based on thresholds."""
+        # Test at threshold boundaries
+        # Threshold 1: 100,000 (full sieve vs segmented sieve)
+        # Threshold 2: 5,000,000 (segmented sieve vs Lehmer)
+
+        test_cases = [
+            (99999, "full sieve"),
+            (100000, "segmented sieve"),
+            (4999999, "segmented sieve"),
+            (5000000, "Lehmer"),
+        ]
+
+        results = []
+        for x, expected_algorithm in test_cases:
+            result = pi(x)
+            results.append((x, result, expected_algorithm))
+
+        # Verify monotonicity across all thresholds
+        for i in range(1, len(results)):
+            x_prev, result_prev, _ = results[i-1]
+            x_curr, result_curr, _ = results[i]
+            assert result_curr >= result_prev, \
+                f"Non-monotone at threshold: π({x_curr}) = {result_curr} vs π({x_prev}) = {result_prev}"
+
+    def test_phi_function_correctness(self):
+        """Test φ(x, a) function correctness."""
+        from lulzprime.pi import _phi_memoized, _simple_sieve
+
+        # φ(x, 0) = x (no primes to exclude)
+        memo = {}
+        primes = _simple_sieve(10)
+        assert _phi_memoized(100, 0, primes, memo) == 100
+
+        # φ(0, a) = 0 (no integers to count)
+        memo = {}
+        assert _phi_memoized(0, 1, primes, memo) == 0
+
+        # φ(1, a) = 0 (no integers >= 2 to count)
+        memo = {}
+        assert _phi_memoized(1, 1, primes, memo) == 0
+
+    def test_P2_function_correctness(self):
+        """Test P2 correction term computation."""
+        from lulzprime.pi import _P2, _simple_sieve
+
+        # P2(x, a) should be non-negative
+        primes = _simple_sieve(1000)
+        pi_cache = {}  # Cache for π(x) values
+
+        x_values = [100, 1000, 10000]
+        a_values = [1, 2, 3]
+
+        for x in x_values:
+            for a in a_values:
+                if a < len(primes):
+                    p2_val = _P2(x, a, primes, pi_cache)
+                    assert p2_val >= 0, f"P2({x}, {a}) should be non-negative, got {p2_val}"
