@@ -65,9 +65,9 @@ How it was fixed, commit reference
 
 ## [PERFORMANCE] resolve(500,000) exceeds acceptable runtime – 2025-12-17
 
-**Status:** SOLUTION VALIDATED - PENDING INTEGRATION
+**Status:** READY TO ENABLE (opt-in) - All validation complete
 
-**Severity:** MEDIUM (Solution Ready)
+**Severity:** LOW (Solution validated, one-line enable)
 
 **Affected Components:**
 - src/lulzprime/resolve.py:resolve()
@@ -245,9 +245,11 @@ Additional validation with detailed performance and resource metrics confirms in
 
 ## [DOC/ARCH] Lehmer π(x) Backend is Placeholder – 2025-12-18
 
-**Status:** RESOLVED
+**Status:** RESOLVED (2025-12-18, Phases 1-4 complete)
 
-**Severity:** MEDIUM
+**Resolution:** Meissel-Lehmer with P2 correction implemented, validated, ready for opt-in
+
+**Severity:** MEDIUM → RESOLVED
 
 **Affected Components:**
 - src/lulzprime/pi.py:_pi_lehmer()
@@ -412,10 +414,24 @@ Measured results comparing lehmer_pi() vs pi() (segmented sieve):
 - Implementation kept for educational value and algorithmic correctness
 - Segmented sieve remains optimal choice for practical use
 
-**Commits:**
-- 7e2f0da: Fix phi(x,a) correctness and add brute-force oracle tests
-- 11acedb: Implement true Legendre π(x) (sublinear, no pi_small fallback)
-- 1f8ba89: Add π(x) micro-benchmark and measured performance evidence
+**Resolution Summary (2025-12-18, Phases 1-4):**
+
+Initial Legendre implementation was correct but slower than segmented sieve. Subsequently:
+- Implemented true Meissel-Lehmer with P2 correction (_pi_meissel)
+- Performance: 8.33× faster than segmented at π(x)=10M
+- Resolve-level: 2.50-6.66× speedup, makes 250k+ indices practical
+- Wired _pi_lehmer() to call _pi_meissel (not Legendre)
+- Validated: 169/169 tests pass, 100% correctness, deterministic
+- Threshold: 250k (evidence-backed from resolve-level diagnostics)
+- Status: READY TO ENABLE (opt-in), ENABLE_LEHMER_PI = False by default
+
+**Resolution Commits:**
+- df237fe: Implement Meissel-Lehmer π(x) with P2 correction
+- 61e2120: Update ADR with Meissel breakthrough (8.33× speedup)
+- d6f1611: Add resolve-level validation (6× speedup confirmed)
+- b7a0e3c: Wire opt-in Meissel dispatch, threshold 250k, safety guards
+- 945ac2b: Phase 3 diagnostics (resolve-level metrics)
+- 2fc8138: Phase 4 finalization (enablement ready)
 
 **Date Resolved:** 2025-12-18
 
