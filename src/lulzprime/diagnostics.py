@@ -229,3 +229,54 @@ class ResolveStats:
             'forecast_value': self.forecast_value,
             'final_result': self.final_result,
         }
+
+@dataclass
+class MeisselStats:
+    """
+    Diagnostic statistics for Meissel π(x) backend.
+
+    Tracks performance and resource usage metrics for Meissel-Lehmer algorithm.
+    Opt-in only - used in experiments and benchmarks, not production resolve().
+
+    Attributes:
+        phi_calls: Number of φ(x, a) function calls
+        phi_cache_size: Peak size of φ memoization cache
+        pi_cache_size: Peak size of P2 π cache
+        recursion_depth_max: Maximum recursion depth reached
+        recursion_guard_trips: Number of times recursion guard triggered
+    """
+    phi_calls: int = 0
+    phi_cache_size: int = 0
+    pi_cache_size: int = 0
+    recursion_depth_max: int = 0
+    recursion_guard_trips: int = 0
+
+    def increment_phi_calls(self) -> None:
+        """Record a φ(x, a) function call."""
+        self.phi_calls += 1
+
+    def update_phi_cache_size(self, size: int) -> None:
+        """Update peak φ cache size."""
+        self.phi_cache_size = max(self.phi_cache_size, size)
+
+    def update_pi_cache_size(self, size: int) -> None:
+        """Update peak P2 π cache size."""
+        self.pi_cache_size = max(self.pi_cache_size, size)
+
+    def update_recursion_depth(self, depth: int) -> None:
+        """Update maximum recursion depth."""
+        self.recursion_depth_max = max(self.recursion_depth_max, depth)
+
+    def increment_recursion_guard_trips(self) -> None:
+        """Record a recursion guard trip."""
+        self.recursion_guard_trips += 1
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert stats to dictionary for reporting."""
+        return {
+            'phi_calls': self.phi_calls,
+            'phi_cache_size': self.phi_cache_size,
+            'pi_cache_size': self.pi_cache_size,
+            'recursion_depth_max': self.recursion_depth_max,
+            'recursion_guard_trips': self.recursion_guard_trips,
+        }

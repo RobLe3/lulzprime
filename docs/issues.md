@@ -213,6 +213,28 @@ Risks: LOW
 - No public API changes
 - One-line config switch to disable if needed
 
+**Phase 3 Diagnostics:** (2025-12-18)
+
+Additional validation with detailed performance and resource metrics confirms integration readiness.
+
+**Experiment:** experiments/resolve_dispatch_diagnostics.py
+**Results:** experiments/results/resolve_dispatch_diagnostics.md
+
+| Index | Segmented | Meissel | Speedup | Memory (Meissel) |
+|-------|-----------|---------|---------|------------------|
+| 100k | 55.0s | 8.3s | 6.66× | 0.66 MB (15.7× less) |
+| 150k | >60s TIMEOUT | 11.1s | >5.39× | 0.81 MB (18.9× less) |
+| 250k | >60s TIMEOUT | 17.8s | >3.37× | 1.06 MB (14.4× less) |
+| 350k | >60s TIMEOUT | 24.0s | >2.50× | 1.10 MB (13.9× less) |
+
+**Additional Findings:**
+- ✅ 100% correctness: All results verified via is_prime + segmented π oracle
+- ✅ Memory: Meissel uses 0.66-1.10 MB (14-19× less than segmented)
+- ✅ Recursion guard: No trips observed (MAX_DEPTH=50 adequate)
+- ✅ Threshold: 250k validated as appropriate (segmented impractical at 150k+)
+
+**Status:** VALIDATED, READY TO ENABLE (opt-in)
+
 **Next Step:** Enable Meissel dispatch after approval.
 
 ---
