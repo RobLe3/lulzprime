@@ -77,6 +77,39 @@ def pi_small(x: int) -> int:
     return len(_simple_sieve(x))
 
 
+def phi_bruteforce(x: int, a: int, primes_first_a: list[int]) -> int:
+    """
+    Brute-force oracle for φ(x, a): count integers in [1, x] not divisible by first a primes.
+
+    This is the definitive reference implementation for testing.
+    Complexity: O(x * a) - only use for testing with small x.
+
+    Args:
+        x: Upper bound
+        a: Number of primes to exclude
+        primes_first_a: List containing at least the first a primes
+
+    Returns:
+        Count of integers n in [1, x] where gcd(n, p_1 * p_2 * ... * p_a) = 1
+    """
+    if a == 0:
+        return x  # No primes to exclude, count all integers in [1, x]
+    if x < 1:
+        return 0  # No positive integers
+
+    count = 0
+    for n in range(1, x + 1):
+        is_coprime = True
+        for i in range(a):
+            if n % primes_first_a[i] == 0:
+                is_coprime = False
+                break
+        if is_coprime:
+            count += 1
+
+    return count
+
+
 def phi(x: int, a: int, primes: list[int], cache: dict | None = None) -> int:
     """
     Compute φ(x, a): count of integers <= x not divisible by first a primes.
@@ -110,10 +143,14 @@ def phi(x: int, a: int, primes: list[int], cache: dict | None = None) -> int:
         return cache[cache_key]
 
     # Base cases
+    # CRITICAL: Must check a==0 first, then x
+    # φ(x, 0) = x for any x (no primes to exclude)
+    # φ(0, a) = 0 for any a > 0 (no integers in [1, 0])
+    # φ(1, a) = 1 for any a >= 0 (1 is not divisible by any prime)
     if a == 0:
-        return x  # No primes to exclude
-    if x < 2:
-        return 0  # No positive integers <= x
+        return x  # No primes to exclude: count all integers in [1, x]
+    if x < 1:
+        return 0  # No positive integers in [1, x] when x < 1
 
     # Recursive case: φ(x, a) = φ(x, a-1) - φ(⌊x/p_a⌋, a-1)
     p_a = primes[a - 1]  # a-th prime (0-indexed, so a-1)
