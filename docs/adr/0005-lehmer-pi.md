@@ -1,9 +1,14 @@
 # ADR 0005: Lehmer-Style Sublinear π(x) Implementation
 
-**Date:** 2025-12-17 (created), 2025-12-18 (implementation completed)
-**Status:** IMPLEMENTED (Correct, Not Performant)
+**Date:** 2025-12-17 (created), 2025-12-18 (Legendre completed, Meissel implemented)
+**Status:** IMPLEMENTED - MEISSEL VARIANT SUCCESSFUL
 **Decision Maker:** Core Team
-**Implementation Status:** True Legendre π(x) implemented and validated. φ(x, a) bug fixed (base case correction). All 149 tests passing. Correctness proven up to π(5M). Performance benchmarks show theoretical O(x^(2/3)) is correct but slower than optimized segmented sieve in practice. ENABLE_LEHMER_PI remains False (dispatch disabled). Implementation kept for algorithmic correctness and educational value.
+**Implementation Status:** Two variants implemented and validated:
+1. **Exact Legendre** (a = π(√x)): Correct but slower than segmented sieve
+2. **Meissel P2** (a = π(x^(1/3))): 8.33× FASTER than segmented sieve at 10M!
+
+Meissel variant achieves practical sublinear performance with crossover at ~500k.
+All 165 tests passing. Validated up to 10M. ENABLE_LEHMER_PI remains False (dispatch disabled pending integration decision).
 **Related Issues:** docs/issues.md [PERFORMANCE] resolve(500,000) exceeds acceptable runtime
 **Related ADRs:** ADR 0002 (Memory-bounded π(x)), ADR 0004 (Parallel π(x))
 
@@ -665,6 +670,189 @@ cache behavior in Python.
 **Recommendation:** Close this ADR as IMPLEMENTED but not performance-optimal.
 Future work could explore Deleglise-Rivat optimizations or C/Cython port, but
 segmented sieve is adequate for current needs (50k-250k indices well-supported).
+
+---
+
+## Meissel P2 Implementation (2025-12-18) - BREAKTHROUGH
+
+### Summary
+
+After the exact Legendre implementation proved slower than segmented sieve,
+we implemented the **true Meissel-Lehmer variant with P2 correction**.
+
+**Result: DRAMATIC SUCCESS - 8.33× faster than segmented sieve at 10M!**
+
+### What Changed
+
+**Key Difference from Legendre:**
+- Exact Legendre: a = π(√x), no P2 needed
+- Meissel P2: a = π(x^(1/3)), requires P2 correction
+
+**Formula:**
+```
+π(x) = φ(x, a) + (a - 1) - P2(x, a)
+
+Where:
+  a = π(⌊x^(1/3)⌋)  [smaller than π(√x), reduces φ depth]
+  b = π(⌊√x⌋)
+  P2(x, a) = Σ_{i=a+1}^{b} [π(x // p_i) - (i - 1)]
+```
+
+**Why This Works:**
+- Smaller a means shallower φ recursion (less overhead)
+- P2 correction compensates for using smaller a
+- P2 uses memoized recursive π calls (efficient)
+
+### Implementation
+
+**New Functions:**
+1. `_integer_cube_root(x)`: Deterministic integer-only cube root
+2. `_pi_meissel(x)`: Meissel formula with P2 correction
+
+**Key Features:**
+- Integer-only arithmetic (no floating-point)
+- Memoized π cache for P2 computation
+- Recursive _pi_meissel calls for large quotients
+- Uses pi_small() for quotients ≤ √x
+
+### Performance Results
+
+**Comprehensive Benchmark (benchmarks/bench_pi_comprehensive.py):**
+
+| x | π(x) | Segmented | Legendre | Meissel | Speedup |
+|---|------|-----------|----------|---------|---------|
+| 10k | 1,229 | 1.0ms | 0.3ms | 0.3ms | 3.01× |
+| 100k | 9,592 | 9.4ms | 1.6ms | 2.4ms | 3.88× |
+| 500k | 41,538 | 58ms | 26ms | **13ms** | **4.57×** |
+| 1M | 78,498 | 140ms | 146ms | **27ms** | **5.13×** |
+| 2M | 148,933 | 272ms | 411ms | **53ms** | **5.13×** |
+| 5M | 348,513 | 731ms | 1,468ms | **92ms** | **7.93×** |
+| 10M | 664,579 | 1,399ms | 4,383ms | **168ms** | **8.33×** |
+
+**Key Findings:**
+
+1. **Crossover Point: ~500k**
+   - Below 500k: Legendre slightly faster (simpler formula)
+   - Above 500k: Meissel dramatically faster (sublinear scaling)
+
+2. **Asymptotic Behavior (100k → 10M, 100× increase):**
+   - Segmented sieve: 148× time increase (~linear)
+   - Exact Legendre: 2,739× time increase (WORSE than linear!)
+   - **Meissel P2: 69× time increase (SUBLINEAR!)**
+
+3. **Theoretical vs Actual:**
+   - Theoretical O(x^(2/3)): would be 21.54× for 100× input
+   - Actual Meissel: 69× (3.2× worse than theoretical)
+   - Still much better than linear and MUCH better than segmented sieve!
+
+### Why Meissel Succeeds Where Legendre Failed
+
+**Exact Legendre Problem:**
+- Uses a = π(√x) ≈ x^(1/2) / ln(x)
+- Deep φ recursion with poor cache behavior
+- Recursive overhead dominates at large x
+
+**Meissel P2 Solution:**
+- Uses a = π(x^(1/3)) ≈ x^(1/3) / ln(x) [much smaller!]
+- Shallower φ recursion (fewer cache misses)
+- P2 uses memoized π calls (efficient reuse)
+- Recursive π calls converge quickly
+
+**The Magic:**
+- Reducing a from √x to x^(1/3) reduces φ depth dramatically
+- P2 overhead is offset by φ savings
+- Net result: Practical sublinear performance
+
+### Validation
+
+**Test Coverage:**
+- 165 total tests passing (100% pass rate)
+- 12 new Meissel tests (test_meissel.py)
+- 16 comprehensive φ tests (test_phi_validation.py)
+- Validated against segmented sieve: 10 to 10M
+- Randomized testing with deterministic seeds
+
+**Correctness:**
+- All values exact matches with segmented sieve
+- Deterministic (no floating-point, no randomization)
+- Integer-only arithmetic throughout
+
+### Impact on Original Performance Issue
+
+**Original Problem:**
+- resolve(500k+) exceeds 30 minutes with segmented sieve
+- Bottleneck: Each π(x) call at large x is expensive
+
+**Meissel Solution:**
+- π(10M) takes 168ms instead of 1,399ms (8.33× speedup)
+- Expected resolve(500k) improvement: 5-8× faster
+- Estimated resolve(500k): ~4-7 minutes instead of 30+ minutes
+- Still not instant, but MUCH more practical
+
+### Integration Decision (Pending)
+
+**Options:**
+
+**A. Enable Meissel Dispatch (Recommended):**
+```python
+def pi(x: int) -> int:
+    if x < 100_000:
+        return _pi_full_sieve(x)
+    elif x < 500_000:
+        return _segmented_sieve(x)
+    else:
+        return _pi_meissel(x)  # Use Meissel for x ≥ 500k
+```
+
+**Pros:**
+- 5-8× speedup for large x (proven in benchmarks)
+- Enables practical 500k+ indices
+- All tests pass, correctness validated
+
+**Cons:**
+- Adds complexity to π() dispatch
+- Needs integration testing with resolve()
+- Should measure actual resolve(500k) improvement
+
+**B. Keep Disabled, Document as Available:**
+- Keep ENABLE_LEHMER_PI = False
+- Document _pi_meissel() as validated and available
+- User can opt-in via manual dispatch if needed
+
+**Recommendation:** Option A with careful integration testing.
+The 8.33× speedup is too significant to ignore.
+
+### Files Modified
+
+**Implementation:**
+- src/lulzprime/lehmer.py: Added _pi_meissel() and _integer_cube_root()
+
+**Tests:**
+- tests/test_meissel.py: 12 comprehensive Meissel tests (NEW)
+- tests/test_phi_validation.py: 4 additional φ tests
+
+**Benchmarks:**
+- benchmarks/bench_pi_comprehensive.py: Three-way comparison (NEW)
+
+**Documentation:**
+- docs/adr/0005-lehmer-pi.md: This section (UPDATED)
+
+### Conclusion
+
+The Meissel-Lehmer variant with P2 correction achieves the original goal:
+**True practical sublinear π(x) performance in Python.**
+
+Unlike the exact Legendre formula which was theoretically correct but practically
+slow, the Meissel variant delivers 5-8× real-world speedup at large scales.
+
+**Status: READY FOR INTEGRATION**
+
+Pending decision on enabling dispatch, this implementation is:
+- ✓ Correct (validated to 10M)
+- ✓ Fast (8.33× speedup at 10M)
+- ✓ Deterministic (integer-only arithmetic)
+- ✓ Tested (165 tests passing)
+- ✓ Documented (comprehensive ADR and benchmarks)
 
 ---
 
