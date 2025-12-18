@@ -166,7 +166,8 @@ class TestPhiFunction:
         Base cases for φ(x, a).
 
         - φ(x, 0) = x (no primes to exclude)
-        - φ(x, a) = 0 if x < 2
+        - φ(0, a) = 0 (no integers in [1, 0])
+        - φ(1, a) = 1 for any a >= 0 (1 is not divisible by any prime)
         """
         primes = _simple_sieve(100)
 
@@ -174,9 +175,12 @@ class TestPhiFunction:
         assert phi(10, 0, primes) == 10
         assert phi(100, 0, primes) == 100
 
-        # φ(x, a) = 0 if x < 2
+        # φ(0, a) = 0 for any a
         assert phi(0, 5, primes) == 0
-        assert phi(1, 5, primes) == 0
+
+        # φ(1, a) = 1 for any a (1 is coprime to all primes)
+        assert phi(1, 5, primes) == 1
+        assert phi(1, 1, primes) == 1
 
     def test_phi_known_values(self):
         """
