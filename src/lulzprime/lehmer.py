@@ -196,20 +196,161 @@ def phi(x: int, a: int, primes: list[int], cache: dict | None = None) -> int:
     return result
 
 
+def _integer_cube_root(x: int) -> int:
+    """
+    Compute integer cube root: largest k such that k^3 <= x.
+
+    Uses integer-only Newton's method for deterministic results.
+    Avoids floating-point to ensure exact integer arithmetic.
+
+    Args:
+        x: Non-negative integer
+
+    Returns:
+        ⌊x^(1/3)⌋
+    """
+    if x < 0:
+        raise ValueError("Cube root of negative number")
+    if x == 0:
+        return 0
+    if x == 1:
+        return 1
+
+    # Initial guess using floating-point (will be refined)
+    k = int(x ** (1/3))
+
+    # Refine using Newton's method with integer arithmetic
+    # Ensures we find the exact integer cube root
+    while k ** 3 > x:
+        k -= 1
+    while (k + 1) ** 3 <= x:
+        k += 1
+
+    return k
+
+
+def _pi_meissel(x: int) -> int:
+    """
+    Count primes <= x using Meissel-Lehmer formula with P2 correction.
+
+    This is a true sublinear algorithm with better asymptotic behavior than
+    the exact Legendre variant (lehmer_pi).
+
+    Formula:
+        π(x) = φ(x, a) + (a - 1) - P2(x, a)
+
+    Where:
+        - a = π(⌊x^(1/3)⌋)  [reduces φ recursion depth vs √x]
+        - b = π(⌊√x⌋)
+        - P2(x, a) = Σ_{i=a+1}^{b} [π(x // p_i) - (i - 1)]
+
+    The P2 term corrects for overcounting in φ(x, a) when a < π(√x).
+    This allows using a smaller value of a, reducing φ computation cost.
+
+    Complexity:
+        - Time: O(x^(2/3) / log x) - better than exact Legendre O(x^(2/3))
+        - Space: O(x^(1/3)) - φ memoization + small primes
+
+    Args:
+        x: Upper bound for counting primes
+
+    Returns:
+        Exact count of primes <= x
+
+    Note:
+        This function is for algorithmic validation and benchmarking.
+        ENABLE_LEHMER_PI remains False - dispatch is disabled.
+    """
+    # Edge cases
+    if x < 2:
+        return 0
+    if x == 2:
+        return 1
+    if x < 5:
+        return 2  # Primes: 2, 3
+
+    # For very small x, simple sieve is faster
+    SMALL_CUTOFF = 10_000
+    if x < SMALL_CUTOFF:
+        return pi_small(x)
+
+    # Compute a = π(⌊x^(1/3)⌋) - integer-only cube root
+    x_cbrt = _integer_cube_root(x)
+    a = pi_small(x_cbrt)
+
+    # Compute b = π(⌊√x⌋)
+    x_sqrt = math.isqrt(x)
+    b = pi_small(x_sqrt)
+
+    # Generate primes up to √x (needed for φ and P2)
+    primes = _simple_sieve(x_sqrt)
+
+    # Verify we have enough primes
+    if len(primes) < b:
+        # Defensive fallback (should never happen)
+        return pi_small(x)
+
+    # Create memoization caches
+    phi_cache = {}
+    pi_cache = {}  # Cache for π(x // p_i) calls in P2
+
+    # Compute φ(x, a): integers in [1, x] not divisible by first a primes
+    phi_x_a = phi(x, a, primes, phi_cache)
+
+    # Compute P2(x, a) correction term
+    # P2 = Σ_{i=a+1}^{b} [π(x // p_i) - (i - 1)]
+    p2_sum = 0
+    for i in range(a, b):  # i from a+1 to b (0-indexed: a to b-1)
+        p_i = primes[i]  # (i+1)-th prime (1-indexed)
+
+        # Stop if p_i^2 > x (no contribution beyond this)
+        if p_i * p_i > x:
+            break
+
+        # Compute π(x // p_i)
+        # Use memoization to avoid redundant computation
+        quotient = x // p_i
+        if quotient in pi_cache:
+            pi_quotient = pi_cache[quotient]
+        else:
+            # Recursively compute π for quotient
+            # For quotient < x_sqrt, use pi_small (fast)
+            # For larger quotients, use _pi_meissel recursively
+            if quotient <= x_sqrt:
+                pi_quotient = pi_small(quotient)
+            else:
+                # Recursive call - will eventually bottom out
+                pi_quotient = _pi_meissel(quotient)
+            pi_cache[quotient] = pi_quotient
+
+        # P2 contribution from this term
+        # Note: i is 0-indexed, so (i+1)-th prime contributes π(x/p_{i+1}) - i
+        p2_sum += pi_quotient - i
+
+    # Apply Meissel formula: π(x) = φ(x, a) + (a - 1) - P2(x, a)
+    result = phi_x_a + (a - 1) - p2_sum
+
+    return result
+
+
 def lehmer_pi(x: int) -> int:
     """
-    Count primes <= x using Legendre's formula.
+    Count primes <= x using exact Legendre's formula.
 
     Implements the canonical formula documented at module level:
         π(x) = φ(x, a) + a - 1
 
     Where a = π(√x) and φ(x, a) counts integers not divisible by first a primes.
 
+    This is the EXACT Legendre formula (no P2 correction needed when a = π(√x)).
+    For the Meissel variant with P2 correction, see _pi_meissel().
+
     For small x (< 10,000), uses simple sieve for efficiency.
-    For large x, uses true sublinear Legendre algorithm.
+    For large x, uses exact Legendre algorithm (theoretically sublinear but
+    slower than segmented sieve in practice due to recursive overhead).
 
     Complexity:
-    - Time: O(x^(2/3)) - true sublinear for large x
+    - Time: O(x^(2/3)) - theoretical sublinear
     - Space: O(x^(1/3)) - φ memoization + small primes
 
     Args:

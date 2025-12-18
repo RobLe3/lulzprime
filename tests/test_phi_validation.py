@@ -5,8 +5,9 @@ These tests are designed to catch caching bugs, indexing errors, and edge cases
 that commonly break recursive implementations.
 """
 
+import random
 import pytest
-from lulzprime.lehmer import phi, phi_bruteforce, _simple_sieve
+from lulzprime.lehmer import phi, phi_bruteforce, _simple_sieve, pi_small
 
 
 class TestPhiValidation:
@@ -242,3 +243,98 @@ class TestPhiValidation:
             actual = phi(x, a, primes, {})
             assert actual == expected, \
                 f"φ({x}, {a}): expected {expected}, got {actual}"
+
+    def test_phi_randomized_comprehensive(self):
+        """
+        Randomized comprehensive test for φ(x, a) with x ≤ 20,000 and a ≤ π(√x).
+
+        Tests 50 random (x, a) pairs with deterministic seed for reproducibility.
+        This validates φ correctness across a wide range of realistic inputs.
+        """
+        random.seed(42)  # Deterministic for reproducibility
+
+        # Generate test cases
+        test_cases = []
+        for _ in range(50):
+            x = random.randint(100, 20_000)
+            sqrt_x = int(x ** 0.5)
+            max_a = pi_small(sqrt_x)  # a ≤ π(√x) is realistic for Meissel
+            a = random.randint(1, max_a) if max_a > 0 else 0
+            test_cases.append((x, a))
+
+        # Generate primes once (enough for all test cases)
+        max_x = max(x for x, _ in test_cases)
+        sqrt_max = int(max_x ** 0.5) + 1
+        primes = _simple_sieve(sqrt_max)
+
+        # Validate each test case
+        for x, a in test_cases:
+            expected = phi_bruteforce(x, a, primes)
+            actual = phi(x, a, primes, {})
+            assert actual == expected, \
+                f"φ({x}, {a}): expected {expected}, got {actual} (seed=42)"
+
+    def test_phi_monotonicity_in_x(self):
+        """
+        Monotonicity test: φ(x, a) is non-decreasing in x for fixed a.
+
+        For fixed a, as x increases, φ(x, a) should increase or stay the same.
+        """
+        primes = _simple_sieve(100)
+        a = 5  # First 5 primes
+
+        x_values = [10, 20, 50, 100, 200, 500, 1000]
+
+        prev_phi = 0
+        for x in x_values:
+            phi_val = phi(x, a, primes, {})
+            assert phi_val >= prev_phi, \
+                f"Monotonicity violated: φ({x_values[x_values.index(x)-1]}, {a}) = {prev_phi}, " \
+                f"φ({x}, {a}) = {phi_val}"
+            prev_phi = phi_val
+
+    def test_phi_monotonicity_in_a(self):
+        """
+        Monotonicity test: φ(x, a) is non-increasing in a for fixed x.
+
+        For fixed x, as a increases (more primes excluded), φ(x, a) should decrease or stay the same.
+        """
+        primes = _simple_sieve(50)
+        x = 1000
+
+        prev_phi = x  # φ(x, 0) = x
+        for a in range(1, 15):
+            phi_val = phi(x, a, primes, {})
+            assert phi_val <= prev_phi, \
+                f"Monotonicity violated: φ({x}, {a-1}) = {prev_phi}, φ({x}, {a}) = {phi_val}"
+            prev_phi = phi_val
+
+    def test_phi_recursion_invariant(self):
+        """
+        Recursion invariant test: φ(x, a) = φ(x, a-1) - φ(⌊x/p_a⌋, a-1).
+
+        This is the fundamental recursive formula that φ must satisfy.
+        Validates that the implementation correctly applies the recurrence.
+        """
+        primes = _simple_sieve(100)
+
+        test_cases = [
+            (100, 4),
+            (500, 6),
+            (1000, 8),
+            (5000, 10),
+        ]
+
+        for x, a in test_cases:
+            # Direct computation via phi()
+            phi_xa = phi(x, a, primes, {})
+
+            # Manual computation via recursion formula
+            p_a = primes[a - 1]
+            phi_xa_minus_1 = phi(x, a - 1, primes, {})
+            phi_x_div_pa = phi(x // p_a, a - 1, primes, {})
+            expected = phi_xa_minus_1 - phi_x_div_pa
+
+            assert phi_xa == expected, \
+                f"Recursion invariant violated for φ({x}, {a}): " \
+                f"got {phi_xa}, expected {expected} from formula"
