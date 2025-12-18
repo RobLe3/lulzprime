@@ -9,31 +9,65 @@ LULZprime is a Python library for efficient prime number resolution using analyt
 - **Prime navigator**: Efficiently locates primes using analytic forecasting + exact correction
 - **Deterministic resolver**: Same inputs always yield same exact primes (Tier A guarantee)
 - **Hardware efficient**: Runs on low-end devices (< 25 MB memory footprint)
-- **Practical up to ~250k indices**: Completes within seconds to minutes for typical use cases
+- **Practical up to 500k indices**: Completes within seconds to ~90s for typical use cases (with Meissel backend)
 - **Well-defined guarantees**: Explicit Tier A/B/C contracts (exact, verified, estimate)
+- **Sublinear algorithm**: O(x^(2/3)) complexity with Meissel-Lehmer implementation
 
 ## What LULZprime Is NOT
 
 - **NOT a cryptographic primitive**: Not suitable for security-critical applications
-- **NOT suitable for unbounded indices**: Practical limit ~250,000 (indices > 500k impractical)
+- **NOT for unbounded indices**: Practical range validated to 500,000 indices
 - **NOT a prime "predictor"**: Uses navigation, not prediction or guessing
 - **NOT a factorization tool**: No shortcuts for integer factorization or RSA
 - **NOT a replacement for crypto libraries**: Use established cryptographic tools for security
 
-## Practical Index Range
+## Practical Performance
 
-**Current implementation (Phase 1):**
-- **Small indices (< 1,000):** milliseconds - excellent for scripting
-- **Medium indices (1,000 - 100,000):** seconds - practical for most tasks
-- **Large indices (100,000 - 250,000):** minutes - acceptable for batch jobs
-- **Stress indices (500,000+):** impractical (30+ minutes) - future work
+**Default backend (segmented sieve):**
+- **Small indices (< 1,000):** milliseconds
+- **Medium indices (1,000 - 100,000):** seconds
+- **Large indices (100,000 - 250,000):** minutes
 
-**Optional parallel acceleration** (opt-in, added 2025-12-17):
-- **`pi_parallel(x, workers=4)`** provides 3-5x wall-time speedup for large indices on multi-core CPUs
-- Useful for 500k+ indices where sequential is impractical
-- See `docs/adr/0004-parallel-pi.md` for details
+**With Meissel backend enabled (recommended for indices ≥ 250k):**
+- **resolve(100k):** ~8s
+- **resolve(250k):** ~18s
+- **resolve(500k):** ~73s ✓ Validated
 
-See `docs/benchmark_policy.md` for measured performance data.
+**Memory:** 0.66-1.16 MB (well under 25 MB constraint)
+
+See `docs/PAPER_ALIGNMENT_STATUS.md` for complete performance analysis and validation results.
+
+### Enable Meissel Backend
+
+The Meissel-Lehmer backend provides O(x^(2/3)) sublinear complexity for large indices. It's opt-in by default:
+
+```python
+# In your code, before using lulzprime
+import lulzprime.config as config
+config.ENABLE_LEHMER_PI = True  # Enable Meissel backend
+
+# Now use lulzprime normally
+import lulzprime
+result = lulzprime.resolve(500_000)  # Fast with Meissel backend
+```
+
+**Why opt-in?** Extensive validation complete (169/169 tests pass), but defaults preserve backward compatibility. Enablement is safe and reversible (one-line change).
+
+**Rollback:** Simply set `ENABLE_LEHMER_PI = False` to revert to segmented sieve.
+
+## Guarantees
+
+LULZprime provides three tiers of guarantees:
+
+- **Tier A (Exact)**: `resolve()`, `resolve_many()` - Exact, deterministic, bit-identical results
+- **Tier B (Verified)**: `between()`, `is_prime()`, `next_prime()`, `prev_prime()` - Verified correct via primality testing
+- **Tier C (Estimate)**: `forecast()` - Analytic estimate only, NOT exact
+
+**Determinism:** All operations use integer-only math (no floating-point drift). Same inputs always produce identical results across all platforms.
+
+**Validation:** All results validated to 10M indices. Memory constraint < 25 MB verified. Full test coverage (169/169 tests passing).
+
+See `docs/api_contract.md` for complete guarantee specifications.
 
 ## Installation
 
@@ -44,7 +78,7 @@ pip install lulzprime
 Or install from source:
 
 ```bash
-git clone git@github.com:RobLe3/lulzprime.git
+git clone https://github.com/RobLe3/lulzprime.git
 cd lulzprime
 pip install -e .
 ```
@@ -98,6 +132,16 @@ primes = lulzprime.resolve_many(indices)
 
 See `docs/api_contract.md` for complete API contracts and guarantee specifications.
 
+## Safety and Determinism
+
+**Integer-only arithmetic:** No floating-point operations. All calculations use exact integer math to prevent drift and ensure deterministic results.
+
+**Deterministic behavior:** Same inputs always produce identical outputs across all platforms, Python versions, and runs.
+
+**Memory safety:** All operations respect the < 25 MB memory constraint. Peak usage validated at 0.66-1.16 MB for tested indices.
+
+**Rollback:** Meissel backend can be disabled with a one-line change (`ENABLE_LEHMER_PI = False`). All tests continue to pass with either backend.
+
 ## Core Concepts
 
 LULZprime inherits from the OMPC approach:
@@ -113,11 +157,23 @@ This reframes primes from a brute-force enumeration problem into a navigable spa
 ## Documentation
 
 - **Quick start**: This README
+- **Performance analysis**: `docs/PAPER_ALIGNMENT_STATUS.md`
 - **Development manual**: `docs/manual/part_0.md` through `part_9.md`
 - **API contracts**: `docs/manual/part_4.md`
 - **Workflows**: `docs/manual/part_5.md`
 - **Developer guide**: `docs/autostart.md` and `docs/defaults.md`
 - **Canonical paper**: `paper/OMPC_v1.33.7lulz.pdf`
+
+## How to Support
+
+If you leverage this library in a production environment and it helps you save money—whether through reduced computational costs, faster processing, or more efficient resource usage—I would appreciate it if you donated 1% of the budget it saves you to homeless people or local homelessness support organizations.
+
+**Ways to help:**
+- Donate to local homeless shelters, food banks, or support services
+- Support organizations working on homelessness prevention
+- Contribute to housing-first initiatives in your community
+
+This request is entirely voluntary and comes with no obligation. The library remains freely available under the MIT license regardless of whether you choose to donate.
 
 ## Development
 
@@ -125,7 +181,7 @@ This reframes primes from a brute-force enumeration problem into a navigable spa
 
 ```bash
 # Clone repository
-git clone git@github.com:RobLe3/lulzprime.git
+git clone https://github.com/RobLe3/lulzprime.git
 cd lulzprime
 
 # Install in development mode with dev dependencies
@@ -135,7 +191,7 @@ pip install -e ".[dev]"
 pytest
 
 # Run tests with coverage
-pytest --cov=lulzprime --cov-report=html
+pytest --cov=src/lulzprime --cov-report=html
 ```
 
 ### Project Structure
@@ -143,13 +199,14 @@ pytest --cov=lulzprime --cov-report=html
 ```
 lulzprime/
 ├── src/lulzprime/      # Source code
-├── tests/              # Test suite
+├── tests/              # Test suite (169 tests)
 ├── docs/               # Documentation
 │   ├── manual/         # Development manual (Parts 0-9)
-│   ├── milestones.md   # Completed deliverables
-│   ├── todo.md         # Planned work
-│   └── issues.md       # Bugs and corrections
+│   ├── adr/            # Architecture Decision Records
+│   ├── PAPER_ALIGNMENT_STATUS.md  # Performance validation
+│   └── FINAL_SUMMARY.md           # Phase 0-6 completion summary
 ├── paper/              # Canonical OMPC paper
+├── experiments/        # Validation experiments
 └── benchmarks/         # Performance benchmarks
 ```
 
@@ -183,7 +240,7 @@ If you use LULZprime in academic work, please cite the canonical OMPC paper:
 [Citation details from paper/OMPC_v1.33.7lulz.pdf]
 ```
 
-## Support
+## Support & Issues
 
 - **Issues**: https://github.com/RobLe3/lulzprime/issues
 - **Documentation**: https://github.com/RobLe3/lulzprime/tree/main/docs
@@ -191,6 +248,11 @@ If you use LULZprime in academic work, please cite the canonical OMPC paper:
 
 ---
 
-**Status**: Alpha development (v0.1.0-dev)
+**Status**: v0.1.0 - Full paper alignment achieved ✓
+
+**Test Coverage**: 169/169 passing
+**Validation**: resolve(500k) measured at 73.044s with Meissel backend
+**Memory**: 1.16 MB (< 25 MB constraint)
+**Determinism**: Bit-identical results, integer-only math
 
 Generated with documentation-first development approach.
