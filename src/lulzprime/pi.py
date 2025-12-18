@@ -26,7 +26,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor, TimeoutError as FuturesTimeoutError
 from typing import Callable
 from .primality import is_prime
-from .config import SMALL_PRIMES
+from .config import SMALL_PRIMES, ENABLE_LEHMER_PI, LEHMER_PI_THRESHOLD
 
 
 def _simple_sieve(limit: int) -> list[int]:
@@ -294,22 +294,22 @@ def pi(x: int) -> int:
 
     # Threshold-based dispatch
     SEGMENTED_THRESHOLD = 100_000
-    LEHMER_THRESHOLD = 5_000_000
 
     if x < SEGMENTED_THRESHOLD:
         # Fast path for small x
         # Memory: ~x bytes (~100 KB for x=100k)
         primes = _simple_sieve(x)
         return len(primes)
-    elif x < LEHMER_THRESHOLD:
-        # Bounded memory path for medium x
+    elif ENABLE_LEHMER_PI and x >= LEHMER_PI_THRESHOLD:
+        # Lehmer path for large x (CURRENTLY PLACEHOLDER - see ADR 0005)
+        # NOTE: _pi_lehmer() currently delegates to segmented sieve
+        # True sublinear algorithm not yet implemented
+        # This branch is DISABLED by default (ENABLE_LEHMER_PI = False)
+        return _pi_lehmer(x)
+    else:
+        # Bounded memory path for all other x
         # Memory: ~8-10 MB peak
         return _segmented_sieve(x)
-    else:
-        # True sublinear path for large x
-        # Time: O(x^(2/3)), Space: O(x^(1/3))
-        # Memory: ~200 KB peak
-        return _pi_lehmer(x)
 
 
 def pi_range(x: int, y: int) -> int:

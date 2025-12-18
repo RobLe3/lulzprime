@@ -145,6 +145,100 @@ Scale characterization benchmarks at resolve(500,000) and resolve(1,000,000) exc
 
 ---
 
+## [DOC/ARCH] Lehmer π(x) Backend is Placeholder – 2025-12-18
+
+**Status:** OPEN
+
+**Severity:** MEDIUM
+
+**Affected Components:**
+- src/lulzprime/pi.py:_pi_lehmer()
+- src/lulzprime/pi.py:pi() (threshold dispatch)
+- src/lulzprime/config.py:ENABLE_LEHMER_PI
+- docs/adr/0005-lehmer-pi.md
+
+**Description:**
+The _pi_lehmer() function exists as infrastructure for Phase 2 (true sublinear π(x)), but currently only contains a PLACEHOLDER that delegates to _segmented_sieve(). The true Meissel-Lehmer algorithm is not yet implemented.
+
+**Related Parts:** Part 6 (section 6.3 - sublinear π(x) target)
+
+**Background:**
+Phase 2 infrastructure was created (ADR 0005, test suite, threshold dispatch) to prepare for Meissel-Lehmer implementation. Initial attempt to implement Legendre's formula (simplified Meissel-Lehmer variant) encountered edge case bugs:
+- Expected π(1000) = 168, actual returned 177 (off by 9)
+- Root cause: Subtle edge cases in φ(x, a) computation or formula application
+- Debugging would exceed benchmark policy time caps
+
+**Current Implementation:**
+```python
+def _pi_lehmer(x: int) -> int:
+    """Placeholder for future true sublinear π(x) implementation."""
+    # Currently delegates to segmented sieve (O(x log log x))
+    return _segmented_sieve(x)
+```
+
+**Actual Behavior:**
+- _pi_lehmer() exists but is NOT sublinear (O(x log log x), not O(x^(2/3)))
+- Threshold dispatch to Lehmer backend is DISABLED by default (ENABLE_LEHMER_PI = False)
+- When enabled, it routes to placeholder that just calls segmented sieve
+- Misleading function name - suggests sublinear but delivers linear
+
+**Expected Behavior:**
+True Meissel-Lehmer algorithm with:
+- Time complexity: O(x^(2/3)) - true sublinear
+- Space complexity: O(x^(1/3)) - sublinear memory
+- Exact, deterministic results matching segmented sieve
+- No external dependencies
+
+**Impact:**
+- No functional impact (dispatch disabled by default, placeholder is correct)
+- Documentation and naming could mislead developers
+- Phase 2 goal (sublinear π(x) for 500k+ indices) not yet achieved
+- Current implementation remains O(x log log x), making 500k+ indices impractical
+
+**Safeguards Implemented (2025-12-18):**
+1. **Runtime Guard:** ENABLE_LEHMER_PI = False by default in config.py
+2. **Clear Documentation:**
+   - config.py warns "MUST remain False until true algorithm implemented"
+   - pi.py dispatch comments state "CURRENTLY PLACEHOLDER - see ADR 0005"
+   - ADR 0005 explicitly states "PARTIALLY IMPLEMENTED (Infrastructure Only)"
+3. **Disabled Dispatch:** pi() does NOT route to _pi_lehmer() unless explicitly enabled
+4. **Test Infrastructure:** 11 tests ready to validate true algorithm when implemented
+
+**Proposed Remediation:**
+Two acceptable paths:
+
+**Option A (Preferred):** Keep infrastructure, complete implementation later
+- Leave ENABLE_LEHMER_PI = False (dispatch disabled)
+- Clearly document placeholder status (DONE)
+- Complete true Meissel-Lehmer implementation when time permits
+- Enable dispatch only after validation against segmented sieve
+
+**Option B (Alternative):** Remove placeholder entirely
+- Remove _pi_lehmer() function
+- Remove ENABLE_LEHMER_PI config
+- Keep ADR 0005 as design document for future work
+- Re-implement from scratch when Phase 2 is prioritized
+
+**Recommendation:** Option A
+- Infrastructure is ready (tests, dispatch, documentation)
+- No risk of misleading users (dispatch disabled, clearly documented)
+- Allows incremental implementation without disrupting existing code
+- Test suite provides validation framework when algorithm is completed
+
+**Implementation Status:**
+- ✓ ADR 0005 created (design documented)
+- ✓ Helper functions implemented (_phi_memoized, _P2)
+- ✓ Test suite created (11 tests, all passing with placeholder)
+- ✓ Threshold dispatch infrastructure (disabled by default)
+- ✗ True Meissel-Lehmer formula (placeholder only)
+- ✗ Dispatch enabled (intentionally disabled until algorithm correct)
+
+**Priority:** MEDIUM (future optimization, not blocking current functionality)
+
+**Date Opened:** 2025-12-18
+
+---
+
 ## Resolved Issues
 
 ## [DOC-INACCURACY] Segmented Sieve Memory Claims Incorrect – 2025-12-17

@@ -41,3 +41,10 @@ SIMULATOR_BETA_DECAY = 0.99
 ENABLE_PARALLEL_PI = False  # Opt-in flag (not currently wired to auto-use)
 PARALLEL_PI_WORKERS = 8  # Default worker count (capped at min(cpu_count, 8))
 PARALLEL_PI_THRESHOLD = 1_000_000  # Minimum x for parallel (avoid overhead below)
+
+# Lehmer π(x) configuration (opt-in, ADR 0005)
+# IMPORTANT: _pi_lehmer() is currently a PLACEHOLDER delegating to segmented sieve
+# True Meissel-Lehmer algorithm is not yet implemented
+# This flag MUST remain False until true sublinear algorithm is validated
+ENABLE_LEHMER_PI = False  # Opt-in flag - DISABLED until true algorithm implemented
+LEHMER_PI_THRESHOLD = 5_000_000  # Threshold for Lehmer dispatch (if enabled)
