@@ -1,16 +1,19 @@
 # ADR 0005: Lehmer-Style Sublinear π(x) Implementation
 
-**Date:** 2025-12-17 (created), 2025-12-18 (Legendre completed, Meissel implemented)
-**Status:** IMPLEMENTED - MEISSEL VARIANT SUCCESSFUL
+**Date:** 2025-12-17 (created), 2025-12-18 (Legendre completed, Meissel implemented, Phases 1-4 complete)
+**Status:** MEISSEL IMPLEMENTED, VALIDATED, OPT-IN
 **Decision Maker:** Core Team
 **Implementation Status:** Two variants implemented and validated:
 1. **Exact Legendre** (a = π(√x)): Correct but slower than segmented sieve
 2. **Meissel P2** (a = π(x^(1/3))): 8.33× FASTER than segmented sieve at 10M!
 
-Meissel variant achieves practical sublinear performance. π(x)-level crossover ~500k,
-but **resolve-level evidence shows segmented impractical at 150k+**, making 250k
-the evidence-backed threshold. All 165 tests passing. Validated up to 10M.
-ENABLE_LEHMER_PI remains False (dispatch disabled pending integration decision).
+Meissel variant achieves practical sublinear performance:
+- **π(x)-level:** 4.57-8.33× speedup (500k-10M range)
+- **resolve()-level:** 2.50-6.66× speedup, segmented impractical at 150k+ (Phase 3 diagnostics)
+- **Threshold:** 250k (evidence-backed from resolve-level testing)
+
+All 169 tests passing. Validated up to 10M at π(x)-level, up to 350k at resolve()-level.
+**ENABLE_LEHMER_PI = False by default (opt-in only).**
 **Related Issues:** docs/issues.md [PERFORMANCE] resolve(500,000) exceeds acceptable runtime
 **Related ADRs:** ADR 0002 (Memory-bounded π(x)), ADR 0004 (Parallel π(x))
 

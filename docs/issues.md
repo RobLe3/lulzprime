@@ -235,7 +235,11 @@ Additional validation with detailed performance and resource metrics confirms in
 
 **Status:** VALIDATED, READY TO ENABLE (opt-in)
 
-**Next Step:** Enable Meissel dispatch after approval.
+**Evidence Commits:**
+- Phase 2 Integration: b7a0e3c
+- Phase 3 Diagnostics: 945ac2b
+
+**Next Step:** Set ENABLE_LEHMER_PI = True in config.py to enable (one-line change).
 
 ---
 

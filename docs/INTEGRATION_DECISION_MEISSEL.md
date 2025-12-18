@@ -220,3 +220,63 @@ All rollback options are trivial (< 5 minutes to implement).
 **Implementation Effort:** < 1 hour (simple dispatch change)
 **Risk Level:** LOW
 **Expected Benefit:** HIGH (20-30× speedup for 500k+ indices)
+
+---
+
+## Enablement Checklist
+
+**Prerequisites for enabling ENABLE_LEHMER_PI = True:**
+
+- [x] **Correctness validated**
+  - All results verified via is_prime()
+  - All results verified via segmented π oracle
+  - 100% pass rate across all test indices (100k, 150k, 250k, 350k)
+  - 169/169 tests passing
+  - Determinism confirmed (repeated runs identical)
+
+- [x] **Memory < 25 MB**
+  - All runs well within constraint
+  - Segmented: 10-15 MB
+  - Meissel: 0.66-1.10 MB (14-19× less)
+
+- [x] **Threshold evidence-backed (250k)**
+  - Resolve-level evidence: segmented impractical at 150k+ (timeouts)
+  - Meissel proven fast at 250k (17.8s, >3.37× speedup)
+  - Conservative margin above crossover point (150k)
+
+- [x] **Rollback trivial (flag)**
+  - One-line disable: ENABLE_LEHMER_PI = False
+  - No API changes, no data migration needed
+  - Immediate fallback to proven segmented sieve
+
+- [x] **Safety mechanisms in place**
+  - Recursion guard: MAX_RECURSION_DEPTH = 50
+  - Integer-only math (no floating-point drift)
+  - No global mutable state
+  - Deterministic behavior across platforms
+
+- [x] **Performance validated**
+  - π(x)-level: 4.57-8.33× speedup (500k-10M)
+  - resolve()-level: 2.50-6.66× speedup
+  - Phase 3 diagnostics confirm real-world benefit
+
+**All prerequisites met. Safe to enable opt-in.**
+
+**How to enable:**
+```python
+# In src/lulzprime/config.py, change:
+ENABLE_LEHMER_PI = False  # Change to True to enable Meissel dispatch
+```
+
+**Expected behavior after enablement:**
+- resolve(< 250k): No change (uses segmented sieve as before)
+- resolve(≥ 250k): 2.50-6.66× faster (uses Meissel backend)
+- All existing tests continue to pass
+- Results remain deterministic and bit-identical
+
+---
+
+**Document Status:** ENABLEMENT READY
+**Validated:** Phase 1-4 complete (commits b7a0e3c, 945ac2b)
+**Default:** ENABLE_LEHMER_PI = False (opt-in only)
+**Risk Level:** LOW (extensively validated, trivial rollback)
