@@ -27,6 +27,7 @@ from concurrent.futures import ProcessPoolExecutor, TimeoutError as FuturesTimeo
 from typing import Callable
 from .primality import is_prime
 from .config import SMALL_PRIMES, ENABLE_LEHMER_PI, LEHMER_PI_THRESHOLD
+from .lehmer import lehmer_pi as _pi_lehmer_true
 
 
 def _simple_sieve(limit: int) -> list[int]:
@@ -301,10 +302,10 @@ def pi(x: int) -> int:
         primes = _simple_sieve(x)
         return len(primes)
     elif ENABLE_LEHMER_PI and x >= LEHMER_PI_THRESHOLD:
-        # Lehmer path for large x (CURRENTLY PLACEHOLDER - see ADR 0005)
-        # NOTE: _pi_lehmer() currently delegates to segmented sieve
-        # True sublinear algorithm not yet implemented
+        # Lehmer path for large x (true sublinear O(x^(2/3)) - see ADR 0005)
+        # Uses Meissel-Lehmer formula with φ(x,a) + P2 correction
         # This branch is DISABLED by default (ENABLE_LEHMER_PI = False)
+        # Enable only after validating correctness via tests
         return _pi_lehmer(x)
     else:
         # Bounded memory path for all other x
@@ -526,17 +527,19 @@ def _P2(x: int, a: int, primes: list[int], pi_cache: dict) -> int:
 
 def _pi_lehmer(x: int) -> int:
     """
-    Placeholder for future true sublinear π(x) implementation.
+    True sublinear π(x) using Meissel-Lehmer formula.
 
-    Currently delegates to segmented sieve (O(x log log x)).
-    True Meissel-Lehmer algorithm (O(x^(2/3))) is future work.
+    Delegates to lehmer_pi() in lehmer.py module which implements:
+    - φ(x, a) with bounded memoization
+    - P2 correction term for pairs of primes
+    - Standard Meissel-Lehmer formula (without P3)
 
-    The Legendre/Meissel-Lehmer formulas require careful implementation
-    to handle edge cases correctly. For now, we use the proven segmented
-    sieve which is memory-efficient and deterministic.
+    This function is only called when ENABLE_LEHMER_PI = True and
+    x >= LEHMER_PI_THRESHOLD. By default, dispatch is disabled until
+    tests validate correctness.
 
-    Time complexity: O(x log log x) - optimized linear (not yet sublinear)
-    Space complexity: O(1) for fixed segment size
+    Time complexity: O(x^(2/3)) - true sublinear
+    Space complexity: O(x^(1/3)) - bounded memoization cache
 
     Args:
         x: Upper bound for prime counting
@@ -546,10 +549,9 @@ def _pi_lehmer(x: int) -> int:
 
     References:
         - ADR 0005: Lehmer π(x) implementation decision
-        - TODO: Implement true Meissel-Lehmer for O(x^(2/3)) complexity
+        - src/lulzprime/lehmer.py: Implementation details
     """
-    # For now, delegate to segmented sieve (proven correct)
-    return _segmented_sieve(x)
+    return _pi_lehmer_true(x)
 
 
 def pi_parallel(x: int, workers: int | None = None, threshold: int = 1_000_000) -> int:

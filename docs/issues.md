@@ -227,15 +227,41 @@ Two acceptable paths:
 
 **Implementation Status:**
 - ✓ ADR 0005 created (design documented)
-- ✓ Helper functions implemented (_phi_memoized, _P2)
-- ✓ Test suite created (11 tests, all passing with placeholder)
-- ✓ Threshold dispatch infrastructure (disabled by default)
-- ✗ True Meissel-Lehmer formula (placeholder only)
-- ✗ Dispatch enabled (intentionally disabled until algorithm correct)
+- ✓ Helper functions implemented (phi, pi_small, _simple_sieve)
+- ✓ Test suite created (13 tests in test_lehmer.py, all passing)
+- ✓ Threshold dispatch infrastructure (disabled by default via ENABLE_LEHMER_PI = False)
+- ⚠️ Meissel-Lehmer formula attempted but φ(x, a) has bug for large values
+- ✗ Currently using pi_small() fallback (correct but O(x log log x), not sublinear)
+- ✗ Dispatch remains disabled (intentionally, until true Lehmer is validated)
+
+**Implementation Attempt (2025-12-18):**
+
+Attempted full Meissel-Lehmer implementation with:
+- phi(x, a) function using recursive formula with memoization
+- Parameter choice: a = π(x^(1/3)), b = π(√x)
+- P2 correction term calculation
+- Formula: π(x) = φ(x, a) + a - 1 - P2(x, a)
+
+**Issue Encountered:**
+
+φ(x, a) produces incorrect results for large values:
+- Works correctly for small x (tested: φ(20, 2) = 7 ✓)
+- Fails for large x (got: φ(10000, 25) = 1329, expected: ~1205)
+- Root cause: Suspected caching issue or subtle recursion bug
+- Debugging exceeded policy time caps
+
+**Current Workaround:**
+
+lehmer_pi() uses pi_small() fallback to ensure correctness:
+- All 137 tests pass (100% pass rate)
+- Results are exact and deterministic
+- Complexity remains O(x log log x), not O(x^(2/3))
+- No performance benefit over segmented sieve yet
 
 **Priority:** MEDIUM (future optimization, not blocking current functionality)
 
 **Date Opened:** 2025-12-18
+**Date Last Updated:** 2025-12-18 (implementation attempt, fallback deployed)
 
 ---
 

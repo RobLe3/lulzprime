@@ -1,9 +1,9 @@
 # ADR 0005: Lehmer-Style Sublinear π(x) Implementation
 
-**Date:** 2025-12-17
-**Status:** PARTIALLY IMPLEMENTED (Infrastructure Only)
+**Date:** 2025-12-17 (created), 2025-12-18 (implementation attempted)
+**Status:** PARTIALLY IMPLEMENTED (Infrastructure Only - pi_small fallback)
 **Decision Maker:** Core Team
-**Implementation Status:** Threshold dispatch and test infrastructure complete. True Meissel-Lehmer algorithm remains future work.
+**Implementation Status:** Threshold dispatch and test infrastructure complete (13 tests passing). Meissel-Lehmer algorithm attempted but encountered φ(x, a) bug for large values. Currently using pi_small() fallback for correctness. True sublinear O(x^(2/3)) complexity remains future work.
 **Related Issues:** docs/issues.md [PERFORMANCE] resolve(500,000) exceeds acceptable runtime
 **Related ADRs:** ADR 0002 (Memory-bounded π(x)), ADR 0004 (Parallel π(x))
 
