@@ -202,12 +202,16 @@ C/Rust port would be required for paper-exceedance performance.
 - ✓ < 25 MB memory (0.66-1.10 MB)
 - ✓ Tier A correctness
 
-**Remaining Optimizations in Python:**
-- Adaptive forecast bracketing: ~10-20% π call reduction
-- Per-resolve cache: Avoid redundant π(x) computation
-- Better φ memoization strategy: Marginal gains
+**Phase 3 Optimization Attempts (2025-12-18):**
+- ❌ Adaptive forecast bracketing (±2% vs ±5%): REJECTED - 1.82-1.87× slower
+- ❌ Per-resolve Meissel cache: REJECTED - dict overhead > benefit
+- **Verdict:** Baseline Meissel implementation is at Python optimum
 
-**Expected Gains:** 10-30% additional speedup (not transformative)
+**Remaining Theoretical Optimizations:**
+- Better φ memoization strategy: Marginal gains, high complexity
+- Loop vectorization: Limited by Python interpreter overhead
+
+**Expected Gains:** <5% (not worth implementation complexity)
 
 ### What Python CANNOT Achieve (Ceiling)
 
@@ -252,6 +256,73 @@ None identified.
 
 ---
 
+## Phase 3: Safe Optimization Attempts (2025-12-18)
+
+### Objective
+Extract remaining Python-safe speedups consistent with paper logic without algorithmic changes.
+
+### Optimizations Attempted
+
+**1. Adaptive Forecast Bracketing**
+- **Change:** Reduced initial bounds from ±5% to ±2% around forecast
+- **Rationale:** Forecast typically <1% error, tighter bounds reduce search space
+- **Implementation:** Modified `_binary_search_pi()` in lookup.py
+
+**2. Per-Resolve Meissel Cache**
+- **Change:** Added dict-based π(x) cache with per-resolve lifetime
+- **Rationale:** Avoid redundant π(x) computation during resolve
+- **Implementation:** Added cache wrapper in `resolve_internal_with_pi()`
+
+### Results
+
+| Index | Baseline (s) | With Optimizations (s) | Change |
+|-------|--------------|------------------------|--------|
+| 100k | 8.3 | 15.5 | **1.87× SLOWER** |
+| 150k | 11.1 | 20.8 | **1.87× SLOWER** |
+| 250k | 17.8 | 32.4 | **1.82× SLOWER** |
+| 350k | 24.0 | 40.5 | **1.69× SLOWER** |
+
+**All tests passed (169/169) but performance degraded significantly.**
+
+### Root Cause Analysis
+
+**Why optimizations failed:**
+
+1. **Per-resolve cache overhead:**
+   - Dict lookup overhead (hash computation, collision handling)
+   - Memory allocation for cache dict
+   - Python dict operations slower than direct π(x) call for small cache sizes
+   - Benefit only realized if many redundant π(x) calls (not the case)
+
+2. **Tighter bracketing backfire:**
+   - ±2% bounds more likely to be wrong vs ±5%
+   - Triggered more bound adjustment π(x) calls (lines 138-145 in lookup.py)
+   - Adjustment overhead > benefit of smaller initial search space
+
+3. **Python overhead dominance:**
+   - Optimizations added complexity in Python (slow)
+   - Tried to optimize already-efficient Meissel core
+   - Bottleneck is interpreter overhead, not algorithmic
+
+### Decision
+
+**REVERT ALL PHASE 3 OPTIMIZATIONS**
+
+- Baseline Meissel implementation is at Python optimum
+- Further optimization requires C/Rust port (Phase 5 scope)
+- Python-level tweaks add complexity without benefit
+
+### Lessons Learned
+
+1. **Measure, don't assume:** "Obvious" optimizations can degrade performance
+2. **Profile first:** Optimize actual bottlenecks, not theoretical ones
+3. **Complexity cost:** Python overhead dominates, algorithmic tweaks don't help
+4. **Premature optimization:** Baseline Meissel was already well-optimized
+
+**Status:** CLOSED - No further Python-level optimizations warranted
+
+---
+
 ## Recommendations
 
 ### Immediate Actions
@@ -261,10 +332,11 @@ None identified.
    - Confirms paper claim for 500k indices
    - Low risk: single-run validation
 
-2. **Implement safe optimizations** (Phase 3 scope)
-   - Adaptive forecast bracketing
-   - Per-resolve cache lifetime
-   - Expected: 10-30% additional speedup
+2. **Phase 3 Safe Optimizations** (COMPLETED - REJECTED)
+   - ✓ Attempted: Adaptive forecast bracketing, per-resolve cache
+   - ❌ Result: 1.82-1.87× performance degradation
+   - **Verdict:** Baseline Meissel is at Python optimum
+   - **Action:** No further Python-level optimizations warranted
 
 ### Future Paths (Out of Current Scope)
 
@@ -294,7 +366,7 @@ The Python implementation achieves or exceeds all measured paper targets:
 
 **Remaining Work:**
 - Measure resolve(500k) to close final gap (requires approval)
-- Safe optimizations for 10-30% additional gain (Phase 3)
+- Phase 3 safe optimizations: COMPLETED - rejected due to performance degradation
 
 **Python Ceiling:**
 - Current implementation ~3.2× worse than theoretical
