@@ -7,8 +7,10 @@
 1. **Exact Legendre** (a = π(√x)): Correct but slower than segmented sieve
 2. **Meissel P2** (a = π(x^(1/3))): 8.33× FASTER than segmented sieve at 10M!
 
-Meissel variant achieves practical sublinear performance with crossover at ~500k.
-All 165 tests passing. Validated up to 10M. ENABLE_LEHMER_PI remains False (dispatch disabled pending integration decision).
+Meissel variant achieves practical sublinear performance. π(x)-level crossover ~500k,
+but **resolve-level evidence shows segmented impractical at 150k+**, making 250k
+the evidence-backed threshold. All 165 tests passing. Validated up to 10M.
+ENABLE_LEHMER_PI remains False (dispatch disabled pending integration decision).
 **Related Issues:** docs/issues.md [PERFORMANCE] resolve(500,000) exceeds acceptable runtime
 **Related ADRs:** ADR 0002 (Memory-bounded π(x)), ADR 0004 (Parallel π(x))
 
@@ -991,22 +993,22 @@ def pi(x: int) -> int:
     """
     if x < 100_000:
         return _pi_full_sieve(x)  # Fast for small x
-    elif x < 500_000:
+    elif x < 250_000:
         return _segmented_sieve(x)  # Proven baseline
     else:
         return _pi_meissel(x)  # Sublinear for large x
 ```
 
 **Rationale:**
-- Smooth transition at proven crossover points
-- No regression for existing use cases (< 500k)
-- Dramatic improvement for large x (≥ 500k)
-- Conservative threshold (500k) with room to lower if needed
+- Resolve-level evidence shows segmented impractical at 150k+ (timeouts)
+- 250k shows >3.43× speedup with Meissel (proven benefit)
+- No regression for existing use cases (< 250k still use proven segmented)
+- Evidence-backed threshold based on real-world resolve() testing
 
 **Alternative Thresholds Considered:**
-- 150k: Meissel already faster here, but keep segmented for safety
-- 300k: More aggressive, but 500k is more conservative
-- **Recommended: 500k** (proven impractical with segmented, proven fast with Meissel)
+- 150k: Segmented times out here - crossover point
+- **Recommended: 250k** (segmented timeouts, Meissel proven fast with >3.43× speedup)
+- 500k: Very conservative, delays benefit unnecessarily
 
 ### Rollback Plan
 

@@ -8,11 +8,11 @@
 
 ## Executive Summary
 
-Enable Meissel-Lehmer π(x) backend for x ≥ 500,000 to make resolve(500k+) practical.
+Enable Meissel-Lehmer π(x) backend for x ≥ 250,000 to make resolve(250k+) practical.
 
-**Current State:** resolve(500k+) impractical (30+ minutes)
-**With Meissel:** resolve(500k) estimated 60-90 seconds
-**Improvement:** 20-30× speedup at 500k indices
+**Current State:** resolve(250k+) impractical (segmented times out at 150k+)
+**With Meissel:** resolve(250k) measured at 17.5s, resolve(500k) estimated 60-90s
+**Improvement:** >3.43× speedup at 250k, 20-30× speedup at 500k
 
 **Validation Complete:** All correctness, determinism, and memory checks pass.
 
@@ -20,13 +20,13 @@ Enable Meissel-Lehmer π(x) backend for x ≥ 500,000 to make resolve(500k+) pra
 
 ## Recommendation
 
-**ENABLE** Meissel dispatch with conservative 500k threshold.
+**ENABLE** Meissel dispatch with evidence-backed 250k threshold.
 
 ### Proposed Change
 
 **File:** src/lulzprime/pi.py
 **Function:** pi(x)
-**Change:** Add Meissel backend for x ≥ 500,000
+**Change:** Add Meissel backend for x ≥ 250,000
 
 ```python
 def pi(x: int) -> int:
@@ -38,7 +38,7 @@ def pi(x: int) -> int:
     # Hybrid dispatch
     if x < 100_000:
         return len(_simple_sieve(x))  # Fast for small x
-    elif x < 500_000:
+    elif x < 250_000:
         return _segmented_sieve(x)  # Proven baseline
     else:
         # Use Meissel for large x (sublinear performance)
@@ -160,16 +160,16 @@ All rollback options are trivial (< 5 minutes to implement).
 
 | Threshold | Rationale | Decision |
 |-----------|-----------|----------|
-| 150k | Meissel faster here, but still fast with segmented | REJECTED (too aggressive) |
-| 300k | Good balance, but segmented still viable | REJECTED (not conservative enough) |
-| **500k** | Segmented impractical, Meissel proven fast | **RECOMMENDED** |
-| 1M | Very conservative, but delays benefit | REJECTED (too conservative) |
+| 150k | Segmented times out here (crossover point) | REJECTED (too aggressive, on the edge) |
+| **250k** | Segmented timeouts, Meissel >3.43× faster | **RECOMMENDED** |
+| 500k | Very conservative, delays benefit | REJECTED (unnecessarily conservative) |
+| 1M | Extremely conservative, wastes proven gains | REJECTED (too conservative) |
 
-**Chosen: 500k**
-- Segmented proven impractical at this scale (timeouts)
-- Meissel proven fast and correct
-- Conservative enough to avoid risk
-- Enables 500k+ use cases immediately
+**Chosen: 250k**
+- Resolve-level evidence: segmented impractical at 150k+ (timeouts)
+- Meissel proven fast at 250k (17.5s, >3.43× speedup)
+- Evidence-backed threshold based on real-world resolve() testing
+- Enables 250k+ use cases immediately with proven benefit
 
 ---
 
@@ -190,13 +190,13 @@ All rollback options are trivial (< 5 minutes to implement).
 
 **RECOMMENDATION: APPROVE INTEGRATION**
 
-**Threshold:** x ≥ 500,000
+**Threshold:** x ≥ 250,000
 **Backend:** _pi_meissel() from lehmer module
 **Rollback:** Config flag + threshold adjustment available
 
 **Expected Outcome:**
-- Makes resolve(500k+) practical for first time
-- No regression for existing use cases (< 500k)
+- Makes resolve(250k+) practical (segmented impractical at 150k+)
+- No regression for existing use cases (< 250k)
 - Proven correct and deterministic
 - Memory efficient
 - Easy rollback if needed

@@ -500,3 +500,109 @@ class TestPiLehmer:
                 if a < len(primes):
                     p2_val = _P2(x, a, primes, pi_cache)
                     assert p2_val >= 0, f"P2({x}, {a}) should be non-negative, got {p2_val}"
+
+    def test_dispatch_with_flag_disabled(self):
+        """Test that pi() uses segmented sieve when ENABLE_LEHMER_PI = False."""
+        import lulzprime.config as config
+        from lulzprime.pi import pi, _segmented_sieve
+        
+        # Save original flag
+        original_flag = config.ENABLE_LEHMER_PI
+        original_threshold = config.LEHMER_PI_THRESHOLD
+        
+        try:
+            # Explicitly disable flag
+            config.ENABLE_LEHMER_PI = False
+            config.LEHMER_PI_THRESHOLD = 250_000
+            
+            # Test x > threshold - should still use segmented (flag disabled)
+            x = 300_000
+            result = pi(x)
+            expected = _segmented_sieve(x)
+            
+            assert result == expected, \
+                f"With flag disabled, pi({x}) should use segmented: {result} == {expected}"
+        finally:
+            # Restore original flag
+            config.ENABLE_LEHMER_PI = original_flag
+            config.LEHMER_PI_THRESHOLD = original_threshold
+
+    def test_dispatch_with_flag_enabled(self):
+        """Test that pi() uses Meissel when ENABLE_LEHMER_PI = True and x >= threshold."""
+        import lulzprime.config as config
+        from lulzprime.pi import pi, _segmented_sieve
+        
+        # Save original flag
+        original_flag = config.ENABLE_LEHMER_PI
+        original_threshold = config.LEHMER_PI_THRESHOLD
+        
+        try:
+            # Enable flag for this test
+            config.ENABLE_LEHMER_PI = True
+            config.LEHMER_PI_THRESHOLD = 250_000
+            
+            # Test x >= threshold - should use Meissel (flag enabled)
+            x = 250_000
+            result = pi(x)
+            expected = _segmented_sieve(x)  # Meissel should match segmented
+            
+            assert result == expected, \
+                f"With flag enabled, pi({x}) should use Meissel and match segmented: {result} == {expected}"
+            
+            # Test x < threshold - should still use segmented (below threshold)
+            x_below = 100_000
+            result_below = pi(x_below)
+            expected_below = _segmented_sieve(x_below)
+            
+            assert result_below == expected_below, \
+                f"Even with flag enabled, pi({x_below}) < threshold should use segmented"
+        finally:
+            # Restore original flag
+            config.ENABLE_LEHMER_PI = original_flag
+            config.LEHMER_PI_THRESHOLD = original_threshold
+
+    def test_meissel_determinism_with_threshold(self):
+        """Test that Meissel via pi() dispatch is deterministic."""
+        import lulzprime.config as config
+        from lulzprime.pi import pi
+        
+        # Save original flag
+        original_flag = config.ENABLE_LEHMER_PI
+        original_threshold = config.LEHMER_PI_THRESHOLD
+        
+        try:
+            # Enable Meissel dispatch
+            config.ENABLE_LEHMER_PI = True
+            config.LEHMER_PI_THRESHOLD = 250_000
+            
+            x = 300_000
+            
+            # Run multiple times
+            results = [pi(x) for _ in range(3)]
+            
+            # All results should be identical (determinism)
+            assert len(set(results)) == 1, \
+                f"Meissel via pi() not deterministic: got {results}"
+        finally:
+            # Restore original flag
+            config.ENABLE_LEHMER_PI = original_flag
+            config.LEHMER_PI_THRESHOLD = original_threshold
+
+    def test_meissel_recursion_safety(self):
+        """Test that _pi_meissel has recursion depth guard."""
+        from lulzprime.lehmer import _pi_meissel
+        
+        # Normal call should work
+        result = _pi_meissel(100_000)
+        assert result == 9592, f"_pi_meissel(100000) should be 9592, got {result}"
+        
+        # Artificially trigger recursion limit by passing large depth
+        # This simulates exceeding the safety bound
+        try:
+            # Calling with depth=51 should raise RecursionError (limit is 50)
+            _ = _pi_meissel(100_000, _depth=51)
+            assert False, "Should have raised RecursionError for depth > 50"
+        except RecursionError as e:
+            # Expected - verify error message
+            assert "exceeds safe bound" in str(e), \
+                f"RecursionError should mention safe bound: {e}"

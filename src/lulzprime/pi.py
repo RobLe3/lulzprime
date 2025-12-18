@@ -27,7 +27,7 @@ from concurrent.futures import ProcessPoolExecutor, TimeoutError as FuturesTimeo
 from typing import Callable
 from .primality import is_prime
 from .config import SMALL_PRIMES, ENABLE_LEHMER_PI, LEHMER_PI_THRESHOLD
-from .lehmer import lehmer_pi as _pi_lehmer_true
+from .lehmer import _pi_meissel
 
 
 def _simple_sieve(limit: int) -> list[int]:
@@ -302,10 +302,11 @@ def pi(x: int) -> int:
         primes = _simple_sieve(x)
         return len(primes)
     elif ENABLE_LEHMER_PI and x >= LEHMER_PI_THRESHOLD:
-        # Lehmer path for large x (true sublinear O(x^(2/3)) - see ADR 0005)
-        # Uses Meissel-Lehmer formula with φ(x,a) + P2 correction
+        # Meissel path for large x (true sublinear O(x^(2/3)) - see ADR 0005)
+        # Uses Meissel formula: π(x) = φ(x,a) + (a-1) - P2(x,a), a = π(x^(1/3))
         # This branch is DISABLED by default (ENABLE_LEHMER_PI = False)
-        # Enable only after validating correctness via tests
+        # Threshold (250k) from resolve-level evidence: segmented impractical at 150k+
+        # Performance: >3.43× faster at 250k, 8.33× faster at 10M vs segmented
         return _pi_lehmer(x)
     else:
         # Bounded memory path for all other x
@@ -527,16 +528,19 @@ def _P2(x: int, a: int, primes: list[int], pi_cache: dict) -> int:
 
 def _pi_lehmer(x: int) -> int:
     """
-    True sublinear π(x) using Meissel-Lehmer formula.
+    True sublinear π(x) using Meissel-Lehmer formula with P2 correction.
 
-    Delegates to lehmer_pi() in lehmer.py module which implements:
-    - φ(x, a) with bounded memoization
+    Delegates to _pi_meissel() in lehmer.py module which implements:
+    - φ(x, a) with bounded memoization, where a = π(⌊x^(1/3)⌋)
     - P2 correction term for pairs of primes
-    - Standard Meissel-Lehmer formula (without P3)
+    - Meissel formula: π(x) = φ(x, a) + (a - 1) - P2(x, a)
 
     This function is only called when ENABLE_LEHMER_PI = True and
-    x >= LEHMER_PI_THRESHOLD. By default, dispatch is disabled until
-    tests validate correctness.
+    x >= LEHMER_PI_THRESHOLD (250k). By default, dispatch is disabled.
+    Threshold derived from resolve-level evidence, not π(x) micro-bench.
+
+    Performance: 8.33× faster than segmented sieve at π(x)=10M,
+    >3.43× faster at resolve(250k) level.
 
     Time complexity: O(x^(2/3)) - true sublinear
     Space complexity: O(x^(1/3)) - bounded memoization cache
@@ -548,10 +552,11 @@ def _pi_lehmer(x: int) -> int:
         Exact count of primes <= x
 
     References:
-        - ADR 0005: Lehmer π(x) implementation decision
-        - src/lulzprime/lehmer.py: Implementation details
+        - ADR 0005: Meissel π(x) implementation decision
+        - src/lulzprime/lehmer.py:_pi_meissel(): Implementation details
+        - docs/INTEGRATION_DECISION_MEISSEL.md: Evidence and approval
     """
-    return _pi_lehmer_true(x)
+    return _pi_meissel(x)
 
 
 def pi_parallel(x: int, workers: int | None = None, threshold: int = 1_000_000) -> int:

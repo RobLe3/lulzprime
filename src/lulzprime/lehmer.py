@@ -229,7 +229,7 @@ def _integer_cube_root(x: int) -> int:
     return k
 
 
-def _pi_meissel(x: int) -> int:
+def _pi_meissel(x: int, _depth: int = 0) -> int:
     """
     Count primes <= x using Meissel-Lehmer formula with P2 correction.
 
@@ -253,14 +253,28 @@ def _pi_meissel(x: int) -> int:
 
     Args:
         x: Upper bound for counting primes
+        _depth: Internal recursion depth tracker (do not provide externally)
 
     Returns:
         Exact count of primes <= x
+
+    Raises:
+        RecursionError: If recursion depth exceeds safe bound (50 levels)
 
     Note:
         This function is for algorithmic validation and benchmarking.
         ENABLE_LEHMER_PI remains False - dispatch is disabled.
     """
+    # Recursion safety guard - deterministic depth check
+    # Expected depth is O(log log x) ≈ 5-10 for x < 10M
+    # Conservative bound: 50 (well below Python's ~1000 default limit)
+    MAX_RECURSION_DEPTH = 50
+    if _depth > MAX_RECURSION_DEPTH:
+        raise RecursionError(
+            f"_pi_meissel recursion depth {_depth} exceeds safe bound {MAX_RECURSION_DEPTH}. "
+            f"This should never happen for x < 10^9. Fallback to segmented sieve recommended."
+        )
+
     # Edge cases
     if x < 2:
         return 0
@@ -319,8 +333,8 @@ def _pi_meissel(x: int) -> int:
             if quotient <= x_sqrt:
                 pi_quotient = pi_small(quotient)
             else:
-                # Recursive call - will eventually bottom out
-                pi_quotient = _pi_meissel(quotient)
+                # Recursive call with depth tracking - will eventually bottom out
+                pi_quotient = _pi_meissel(quotient, _depth + 1)
             pi_cache[quotient] = pi_quotient
 
         # P2 contribution from this term

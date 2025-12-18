@@ -194,16 +194,17 @@ Implementation:
 def pi(x: int) -> int:
     if x < 100_000:
         return _pi_full_sieve(x)
-    elif x < 500_000:
+    elif x < 250_000:
         return _segmented_sieve(x)
     else:
-        return _pi_meissel(x)  # Use Meissel for x ≥ 500k
+        return _pi_meissel(x)  # Use Meissel for x ≥ 250k
 ```
 
 Benefits:
-- Makes resolve(500k+) practical (60-90s instead of 30+ min)
-- No regression for x < 500k (segmented remains fast)
-- Smooth transition at 500k threshold
+- Makes resolve(250k+) practical (segmented impractical at 150k+)
+- 250k: 17.5s with Meissel vs >60s timeout with segmented (>3.43× speedup)
+- No regression for x < 250k (segmented remains fast)
+- Evidence-backed threshold from resolve-level testing
 - All tests pass (165/165)
 
 Risks: LOW
