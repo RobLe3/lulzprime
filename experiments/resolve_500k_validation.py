@@ -21,8 +21,9 @@ import tracemalloc
 import platform
 from datetime import datetime
 
-from lulzprime import resolve
-from lulzprime.pi import pi
+from lulzprime.lookup import resolve_internal_with_pi
+from lulzprime.lehmer import _pi_meissel
+from lulzprime.pi import pi as segmented_pi
 from lulzprime.primality import is_prime
 
 
@@ -70,9 +71,11 @@ def run_validation():
     tracemalloc.start()
     tracemalloc.reset_peak()
 
-    print("Running resolve(500k)... (estimated 60-90s)")
+    print("Running resolve(500k) with Meissel backend... (estimated 60-90s)")
     start = time.perf_counter()
-    result = resolve(index)
+    # Use Meissel backend explicitly via dependency injection
+    # (ENABLE_LEHMER_PI flag is disabled by default, so we inject _pi_meissel)
+    result = resolve_internal_with_pi(index, _pi_meissel)
     elapsed = time.perf_counter() - start
 
     # Get peak memory
@@ -101,7 +104,8 @@ def run_validation():
         return False
 
     print(f"  [2/2] π({result:,}) == {index:,}... ", end="", flush=True)
-    pi_result = pi(result)
+    # Use segmented π as oracle (independent verification)
+    pi_result = segmented_pi(result)
     if pi_result == index:
         print(f"✓ PASS (π = {pi_result:,})")
     else:
@@ -123,9 +127,9 @@ def run_validation():
     response = input("Run second validation to verify determinism? [y/N]: ").strip().lower()
 
     if response == 'y':
-        print("Running second resolve(500k)...")
+        print("Running second resolve(500k) with Meissel...")
         start2 = time.perf_counter()
-        result2 = resolve(index)
+        result2 = resolve_internal_with_pi(index, _pi_meissel)
         elapsed2 = time.perf_counter() - start2
 
         print(f"✓ Completed in {elapsed2:.3f}s")
