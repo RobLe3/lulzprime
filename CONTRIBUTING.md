@@ -1,196 +1,160 @@
-# Contributing to LULZprime
+# Contributing to lulzprime
 
-Thank you for considering contributing to LULZprime!
+Thank you for considering contributing to lulzprime!
 
-## Before You Start
+## Development Setup
 
-**REQUIRED READING** (in this order):
+### Prerequisites
 
-1. `docs/autostart.md` - Startup procedure and file parse order
-2. `docs/defaults.md` - Repository rules and constraints
-3. `docs/manual/part_0.md` - Conceptual framing
-4. `docs/manual/part_2.md` - Goals, non-goals, and constraints
-5. `docs/manual/part_4.md` - Public API contracts
-6. `docs/manual/part_8.md` - Extension rules
+- Python >=3.10
+- pip
+- git
 
-**These documents are binding.** Contributions that violate them will be rejected.
+### Local Development
 
-## Canonical Reference
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/RobLe3/lulzprime.git
+   cd lulzprime
+   ```
 
-The canonical concept source is `paper/OMPC_v1.33.7lulz.pdf`.
+2. **Create a virtual environment:**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
 
-**If in doubt, check the paper first.**
+3. **Install dev dependencies:**
+   ```bash
+   pip install -e ".[dev]"
+   ```
 
-## Precedence Order
+4. **Run tests:**
+   ```bash
+   pytest
+   ```
 
-When there is conflict or uncertainty, resolve by consulting in this order:
-1. `paper/OMPC_v1.33.7lulz.pdf`
-2. `docs/manual/part_0.md` through `part_9.md`
-3. `docs/defaults.md`
-4. Source code
-5. Code comments
-
-## Contribution Workflow
-
-### 1. Check Existing Work
-
-Before starting:
-- Check `docs/issues.md` for known bugs
-- Check `docs/todo.md` for planned work
-- Check `docs/milestones.md` to avoid duplicate work
-
-### 2. Discuss Major Changes
-
-For significant changes:
-- Open an issue first
-- Reference relevant manual parts
-- Explain goal mapping (G1–G7 from Part 9)
-- Wait for approval before implementation
-
-### 3. Development Process
+## Running Tests
 
 ```bash
-# Fork and clone
-git clone git@github.com:YourUsername/lulzprime.git
-cd lulzprime
+# Quick test run
+pytest -q
 
-# Install in development mode
-pip install -e ".[dev]"
+# With coverage
+pytest --cov=src/lulzprime --cov-report=html
 
-# Create feature branch
-git checkout -b feat/your-feature
+# Specific test file
+pytest tests/test_resolve.py
 
-# Make changes
-# - Follow manual parts 0-9
-# - Add tests for new functionality
-# - Update relevant tracking files
+# Run with PYTHONPATH set
+PYTHONPATH=src:$PYTHONPATH pytest
+```
 
-# Run tests
-pytest
+## Code Style
 
-# Run code quality checks
+This project uses:
+- **black** for code formatting (line length: 100)
+- **ruff** for linting
+- **mypy** for type checking (optional, not strict)
+
+```bash
+# Format code
 black src/ tests/
+
+# Lint
 ruff check src/ tests/
+
+# Type check
 mypy src/
-
-# Commit with descriptive message
-git commit -m "feat: Add feature X per Part Y"
-
-# Push and create PR
-git push origin feat/your-feature
 ```
 
-### 4. Pull Request Requirements
+## Testing Guidelines
 
-Your PR must include:
-- Description of changes
-- Reference to manual parts followed
-- Goal mapping (which of G1-G7 does this address?)
-- Test coverage for new code
-- Update to relevant tracking file:
-  - `docs/issues.md` if fixing a bug
-  - `docs/todo.md` if completing planned work
-  - `docs/milestones.md` if completing a deliverable
-- Confirmation that no forbidden scope was entered
+- All new features must include tests
+- Maintain 100% test pass rate (currently 169/169)
+- Do not add long-running tests to the main test suite
+- Benchmarks should be in `benchmarks/` or `experiments/`, not `tests/`
+- Use policy-compliant test indices (see `docs/benchmark_policy.md`)
 
-## Code Standards
+## Contribution Guidelines
 
-### Python Style
-- Follow PEP 8
-- Use `black` for formatting (line length 100)
-- Use `ruff` for linting
-- Type hints encouraged but not required
+### Before Submitting
 
-### Documentation
-- Docstrings for all public functions
-- Reference manual parts in module docstrings
-- Include examples in docstrings where helpful
+1. Ensure all tests pass: `pytest`
+2. Format code: `black src/ tests/`
+3. Check linting: `ruff check src/ tests/`
+4. Update documentation if needed
 
-### Testing
-- All public API functions must have tests
-- Tests must verify contracts from Part 4
-- Use pytest fixtures for common setups
-- Aim for >80% coverage of core modules
+### Pull Request Process
 
-## What Can Be Changed
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Commit with clear messages
+7. Push to your fork
+8. Open a pull request
 
-### Allowed (from Part 8, section 8.3):
-- New π(x) implementations (behind PrimeCounter interface)
-- New primality test backends
-- Execution backends (multiprocessing, GPU)
-- Table storage backends
-- Diagnostics and visualization tools
+### Commit Message Format
 
-### Forbidden (from Part 8, section 8.4):
-- Modifying public API semantics
-- Replacing forecast → correction pipelines with heuristics
-- Adding global sieving to core resolution
-- Adding AI/ML "prime prediction"
-- Adding network calls or remote dependencies
-- Making cryptographic claims
-
-## Scope Integrity
-
-From `docs/manual/part_2.md`, section 2.4:
-
-LULZprime must **NOT** claim or implement:
-- Cryptographic breaks or shortcuts
-- Integer factorization acceleration
-- Cryptographic entropy replacement
-- Heuristic "prime guessing"
-- Probabilistic claims without verification
-
-**These exclusions are permanent and enforceable.**
-
-## Testing Requirements
-
-Before submitting:
-- All tests pass: `pytest`
-- Code formatted: `black src/ tests/`
-- No lint errors: `ruff check src/ tests/`
-- Type checking passes: `mypy src/`
-
-## Commit Message Format
-
-Use conventional commits:
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `test:` Test additions/changes
-- `refactor:` Code refactoring
-- `perf:` Performance improvements
-- `chore:` Build/tooling changes
-
-Example:
 ```
-feat: Implement Lehmer π(x) algorithm per Part 6
+Brief summary (50 chars or less)
 
-- Adds sublinear prime counting per Part 6 performance model
-- Satisfies memory constraint < 25MB
-- Tests verify correctness against simple counting
-- Maps to goals G2 (hardware efficiency) and G6 (maintainability)
+Detailed explanation if needed:
+- What changed
+- Why it changed
+- Impact on existing functionality
+
+Refs: #issue-number (if applicable)
 ```
 
-## Review Process
+## What to Contribute
 
-Your PR will be reviewed for:
-1. Alignment with manual parts
-2. API contract compliance
-3. Test coverage
-4. Code quality
-5. Documentation completeness
-6. Scope integrity
+### Welcome Contributions
+
+- Bug fixes
+- Documentation improvements
+- Test coverage improvements
+- Performance optimizations (with benchmarks)
+- Examples and tutorials
+
+### Requires Discussion First
+
+- New public API functions
+- Breaking changes to existing behavior
+- Large-scale refactoring
+- New algorithm implementations
+
+Please open an issue first to discuss these types of changes.
+
+## Performance Changes
+
+If proposing performance improvements:
+
+1. Include before/after benchmarks
+2. Verify correctness (all tests pass)
+3. Verify determinism (results unchanged)
+4. Document complexity changes
+5. Explain trade-offs (memory vs time, etc.)
+
+## Documentation
+
+- Public API must be documented
+- Use docstrings with examples
+- Update `docs/` if behavior changes
+- Keep README.md accurate
 
 ## Questions?
 
-- Open an issue with label `question`
-- Reference specific manual parts in your question
-- Be specific about what you've already consulted
+- Open an issue for questions
+- Check existing docs in `docs/`
+- Review ADRs in `docs/adr/` for design decisions
+
+## Code of Conduct
+
+Be respectful and professional in all interactions.
 
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
-
----
-
-**Remember**: The project succeeds when it remains aligned with the canonical OMPC paper and maintains scope integrity.
