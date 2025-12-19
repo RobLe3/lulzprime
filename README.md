@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="lulzprime.jpg" alt="LULZprime logo" width="320">
+</p>
+
 # LULZprime
 
 **Prime resolution and navigation library based on OMPC**
