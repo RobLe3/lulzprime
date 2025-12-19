@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="lulzprime.jpg" alt="LULZprime logo" width="320">
+  <img src="https://raw.githubusercontent.com/RobLe3/lulzprime/main/lulzprime.jpg" alt="LULZprime logo" width="320">
 </p>
 
 # LULZprime
