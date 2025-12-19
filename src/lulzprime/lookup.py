@@ -4,7 +4,7 @@ Jump-adjust pipelines for prime resolution.
 Provides the internal machinery for resolving p_n using forecast + π(x) refinement.
 See docs/manual/part_5.md section 5.3 for canonical workflow.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 """
 
 from typing import Callable, Optional

@@ -1,4 +1,10 @@
-# defaults.md  
+> ⚠️ **Status: Historical / Archived**
+>
+> This document reflects the development process used while LULZprime was actively evolving.
+> The project is now a completed, reference-grade implementation.
+> This file is retained for context and provenance only.
+
+# defaults.md
 **LULZprime – Development Defaults, Repository Scaffold, and Operational Rules**
 
 ---
@@ -23,11 +29,11 @@ This document is **binding**, not advisory.
 ## 1. Canonical References and Precedence
 
 ### 1.1 Canonical concept source
-- **Primary reference:** `paper/OMPC_v1.33.7lulz.pdf`
+- **Primary reference:** `https://roblemumin.com/library.html`
 - **Rule:** *If in doubt, check the paper.*
 
 ### 1.2 Precedence order (highest to lowest)
-1. `paper/OMPC_v1.33.7lulz.pdf`
+1. `https://roblemumin.com/library.html`
 2. `docs/manual/part_0.md` through `part_9.md`
 3. `docs/defaults.md` (this file)
 4. Source code
@@ -113,7 +119,7 @@ The project favors **explicit ignores over accidental leaks**.
 - Each part is versioned, short, and scoped.
 
 ### 6.2 Canonical paper
-- `paper/OMPC_v1.33.7lulz.pdf` must exist in the repo.
+- `https://roblemumin.com/library.html` must exist in the repo.
 - Long verbatim excerpts must **not** be copied into docs.
 - Docs may summarize and reference, not reproduce.
 

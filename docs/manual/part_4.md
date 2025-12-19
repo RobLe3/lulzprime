@@ -1,3 +1,9 @@
+> ⚠️ **Status: Historical / Archived**
+>
+> This document reflects the development process used while LULZprime was actively evolving.
+> The project is now a completed, reference-grade implementation.
+> This file is retained for context and provenance only.
+
 Part 4 of 9, Public API and Interface Contracts
 4.1 Canonical reference
 * Canonical concept source: OMPC_v1.33.7lulz.pdf

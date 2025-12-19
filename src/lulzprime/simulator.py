@@ -4,7 +4,7 @@ OMPC simulator for pseudo-prime sequence generation.
 Generates pseudo-primes using negative feedback control on density ratio.
 See docs/manual/part_5.md section 5.7 for workflow specification.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 Output class: Simulation output (non-exact), validated via diagnostics.
 
 WARNING: Simulation output is NOT exact primes. It is for testing and analysis only.

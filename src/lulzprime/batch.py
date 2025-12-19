@@ -6,7 +6,7 @@ by sorting internally and caching π(x) computations within one batch.
 
 See docs/api_contract.md for guarantee tiers and performance characteristics.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 """
 
 from typing import Iterable

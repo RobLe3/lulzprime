@@ -152,7 +152,7 @@ LULZprime inherits from the OMPC approach:
 
 This reframes primes from a brute-force enumeration problem into a navigable space.
 
-**Canonical reference**: `paper/OMPC_v1.33.7lulz.pdf`
+**Canonical reference**: [OMPC Paper at roblemumin.com](https://roblemumin.com/library.html)
 
 ## Documentation
 
@@ -162,7 +162,35 @@ This reframes primes from a brute-force enumeration problem into a navigable spa
 - **API contracts**: `docs/manual/part_4.md`
 - **Workflows**: `docs/manual/part_5.md`
 - **Developer guide**: `docs/autostart.md` and `docs/defaults.md`
-- **Canonical paper**: `paper/OMPC_v1.33.7lulz.pdf`
+- **Canonical paper**: [OMPC at roblemumin.com](https://roblemumin.com/library.html)
+
+**Note:** Documentation in `docs/manual/`, `docs/autostart.md`, `docs/defaults.md`, and `docs/benchmark_policy.md` reflects historical development process and is archived. The project is now a completed, reference-grade implementation.
+
+## Maintenance Status
+
+**Current Status:** Completed reference implementation (v0.1.0)
+
+LULZprime is a **finished artifact**. The implementation has achieved full paper alignment and is production-ready for indices up to 500k.
+
+**Maintenance model:**
+- **Bug fixes:** Critical bugs will be addressed
+- **Security issues:** Reported vulnerabilities will be fixed
+- **No active feature development:** The library is feature-complete for its intended scope
+- **No performance tuning:** Python implementation is at optimum (Phase 3 validated)
+- **Community contributions:** Bug fixes and documentation improvements welcome (see CONTRIBUTING.md)
+
+**What this means:**
+- The library is stable and safe to use in production
+- API will not change (backward compatibility preserved)
+- No new features planned (scope is deliberately limited)
+- All 169 tests continue to pass
+- Defaults remain unchanged (ENABLE_LEHMER_PI = False)
+
+**Future work (out of scope):**
+- C/Rust port for paper-exceedance performance (10-50× gains possible)
+- P3 correction or Deleglise-Rivat algorithms (research-level)
+
+See `docs/PAPER_EXCEEDANCE_ROADMAP.md` for potential future directions (informational only).
 
 ## How to Support
 
@@ -198,26 +226,22 @@ pytest --cov=src/lulzprime --cov-report=html
 
 ```
 lulzprime/
-├── src/lulzprime/      # Source code
-├── tests/              # Test suite (169 tests)
-├── docs/               # Documentation
-│   ├── manual/         # Development manual (Parts 0-9)
+├── src/lulzprime/      # Core deterministic implementation
+├── tests/              # Test suite (169 tests, all passing)
+├── docs/               # Design decisions, validation, release notes
 │   ├── adr/            # Architecture Decision Records
+│   ├── manual/         # Development manual (historical, archived)
 │   ├── PAPER_ALIGNMENT_STATUS.md  # Performance validation
-│   └── FINAL_SUMMARY.md           # Phase 0-6 completion summary
-├── paper/              # Canonical OMPC paper
-├── experiments/        # Validation experiments
-└── benchmarks/         # Performance benchmarks
+│   └── RELEASE_CHECKLIST.md       # PyPI release workflow
+├── benchmarks/         # Manual benchmarks (not run in CI)
+└── experiments/        # One-off validation scripts
 ```
 
 ### Contributing
 
 See `CONTRIBUTING.md` for contribution guidelines.
 
-**Important**: Before contributing, read:
-1. `docs/autostart.md` - Startup procedure and parse order
-2. `docs/defaults.md` - Repository rules and constraints
-3. `docs/manual/part_0.md` through `part_9.md` - Development manual
+**Scope:** Bug fixes and documentation improvements are welcome. New features or algorithm changes are out of scope (library is feature-complete).
 
 ## Non-Goals
 
@@ -235,10 +259,8 @@ MIT License - See `LICENSE` file for details.
 
 ## Citation
 
-If you use LULZprime in academic work, please cite the canonical OMPC paper:
-```
-[Citation details from paper/OMPC_v1.33.7lulz.pdf]
-```
+If you use LULZprime in academic work, please cite the canonical OMPC paper available at:
+https://roblemumin.com/library.html
 
 ## Support & Issues
 

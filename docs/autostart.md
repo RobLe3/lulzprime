@@ -1,4 +1,10 @@
-# autostart.md  
+> ⚠️ **Status: Historical / Archived**
+>
+> This document reflects the development process used while LULZprime was actively evolving.
+> The project is now a completed, reference-grade implementation.
+> This file is retained for context and provenance only.
+
+# autostart.md
 **LULZprime – Agent / Developer Startup Order, Consultation Priority, and Tracking Files**
 
 ---
@@ -23,7 +29,7 @@ This file is a **runbook**, the first operational entry point after cloning the 
 
 When there is any conflict or uncertainty, resolve by consulting sources in this order:
 
-1. `paper/OMPC_v1.33.7lulz.pdf`  
+1. `https://roblemumin.com/library.html`  
 2. `docs/manual/part_0.md` … `docs/manual/part_9.md`  
 3. `docs/defaults.md`  
 4. Source code under `src/lulzprime/`  
@@ -108,7 +114,7 @@ Then proceed into code changes.
 
 When an agent or developer is uncertain about correctness, scope, or intent:
 
-1. Consult `paper/OMPC_v1.33.7lulz.pdf`  
+1. Consult `https://roblemumin.com/library.html`  
 2. Consult `docs/manual/part_0.md` (concept primer)  
 3. Consult `docs/manual/part_2.md` (constraints)  
 4. Consult `docs/manual/part_4.md` (API contract)  
@@ -188,7 +194,7 @@ Then ensure it remains optional and does not couple into core.
 
 ### 7.4 Before any change to resolver workflow
 Read:
-- `paper/OMPC_v1.33.7lulz.pdf`
+- `https://roblemumin.com/library.html`
 - `docs/manual/part_5.md`
 - `docs/manual/part_7.md`
 Any workflow change must be logged as `WORKFLOW-CHANGE` in `docs/issues.md`.
@@ -211,7 +217,7 @@ At the end of any work session:
 ## 9. File Locations (Single Source of Truth)
 
 - Canonical paper:  
-  `paper/OMPC_v1.33.7lulz.pdf`
+  `https://roblemumin.com/library.html`
 
 - Manual:  
   `docs/manual/part_0.md` … `docs/manual/part_9.md`

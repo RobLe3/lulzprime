@@ -410,7 +410,7 @@ LOW (builds on Option B with simple threshold check)
 - **ADR 0002:** docs/adr/0002-memory-bounded-pi.md (memory-bounded π(x) implementation)
 - **Constraints:** docs/manual/part_6.md (section 6.3 sublinear target, section 6.4 memory)
 - **API Contract:** docs/api_contract.md (performance expectations)
-- **Canonical Reference:** paper/OMPC_v1.33.7lulz.pdf
+- **Canonical Reference:** https://roblemumin.com/library.html
 
 ---
 

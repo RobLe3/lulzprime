@@ -470,7 +470,7 @@ def pi(x: int) -> int:
   - **ADR 0002:** Memory-bounded π(x) (segmented sieve baseline)
   - **ADR 0004:** Parallel π(x) (multiprocessing, not algorithmic)
   - **Part 6 section 6.3:** Sublinear π(x) target specification
-  - **Canonical Reference:** paper/OMPC_v1.33.7lulz.pdf
+  - **Canonical Reference:** https://roblemumin.com/library.html
 
 ---
 

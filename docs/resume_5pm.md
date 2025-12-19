@@ -47,7 +47,7 @@ First production-ready snapshot with verified correctness, optimized performance
 8. `docs/issues.md`
 9. `docs/milestones.md`
 
-**Rule:** If any conflict or ambiguity, consult `paper/OMPC_v1.33.7lulz.pdf` first.
+**Rule:** If any conflict or ambiguity, consult `https://roblemumin.com/library.html` first.
 
 ---
 

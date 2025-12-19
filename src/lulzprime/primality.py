@@ -4,7 +4,7 @@ Primality testing utilities.
 Provides deterministic and probabilistic primality tests.
 See docs/manual/part_5.md section 5.6 for workflow specification.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 Output class: Tier B (Verified within stated range)
 """
 

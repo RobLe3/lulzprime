@@ -15,7 +15,7 @@ It serves as the canonical reference for:
 - Misuse cases that users must avoid
 
 **Canonical references:**
-- `paper/OMPC_v1.33.7lulz.pdf` (conceptual foundation)
+- [OMPC Paper](https://roblemumin.com/library.html) (conceptual foundation)
 - `docs/manual/part_4.md` (API specification)
 - `docs/manual/part_9.md` (alignment goals)
 
@@ -506,7 +506,7 @@ primes = resolve_many_parallel([100_000, 200_000, 300_000], workers=4)
 
 ## References
 
-- **Canonical paper**: paper/OMPC_v1.33.7lulz.pdf
+- **Canonical paper**: [OMPC at roblemumin.com](https://roblemumin.com/library.html)
 - **Public API spec**: docs/manual/part_4.md
 - **Workflows**: docs/manual/part_5.md
 - **Performance constraints**: docs/manual/part_6.md

@@ -388,7 +388,7 @@ Add to docs/todo.md as future work with:
 - **Constraints:** docs/manual/part_2.md (section 2.5), docs/manual/part_6.md (sections 6.3, 6.4)
 - **Workflow:** docs/manual/part_5.md (section 5.3)
 - **Goals:** docs/manual/part_9.md (G2 Hardware Efficiency, G7 OMPC Alignment)
-- **Canonical Reference:** paper/OMPC_v1.33.7lulz.pdf
+- **Canonical Reference:** https://roblemumin.com/library.html
 
 ---
 

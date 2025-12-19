@@ -4,7 +4,7 @@ Prime counting function π(x) implementations.
 Provides exact counting of primes <= x using efficient algorithms.
 See docs/manual/part_4.md section 4.7 for interface contracts.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 
 Implementation notes:
 - Hybrid approach with threshold-based dispatch:

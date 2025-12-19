@@ -4,7 +4,7 @@ User-facing prime resolution functions.
 Provides the public API for prime resolution and navigation.
 See docs/manual/part_4.md for API contracts and part_5.md for workflows.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 """
 
 from .lookup import resolve_internal

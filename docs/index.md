@@ -9,7 +9,7 @@ Welcome to the LULZprime documentation.
 - **Repository Rules**: Read [defaults.md](defaults.md)
 - **Manual**: [Part 0](manual/part_0.md) through [Part 9](manual/part_9.md)
 - **API Reference**: [Part 4](manual/part_4.md)
-- **Canonical Paper**: [paper/OMPC_v1.33.7lulz.pdf](../paper/OMPC_v1.33.7lulz.pdf)
+- **Canonical Paper**: [https://roblemumin.com/library.html](../https://roblemumin.com/library.html)
 
 ## Documentation Structure
 
@@ -47,7 +47,7 @@ The development manual consists of 10 parts:
 
 When there is any conflict or uncertainty, consult sources in this order:
 
-1. `paper/OMPC_v1.33.7lulz.pdf`
+1. `https://roblemumin.com/library.html`
 2. `manual/part_0.md` through `part_9.md`
 3. `defaults.md`
 4. Source code

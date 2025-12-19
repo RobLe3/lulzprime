@@ -4,7 +4,7 @@ Gap distributions for OMPC simulation.
 Provides empirical and theoretical gap distributions for pseudo-prime generation.
 See docs/manual/part_5.md section 5.7 for usage in simulator.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 """
 
 from typing import Optional

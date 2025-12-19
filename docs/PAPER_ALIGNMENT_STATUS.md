@@ -2,7 +2,7 @@
 
 **Date:** 2025-12-18
 **Implementation:** Meissel-Lehmer with P2 correction (Phases 1-4 complete)
-**Reference:** paper/OMPC_v1.33.7lulz.pdf
+**Reference:** [OMPC Paper](https://roblemumin.com/library.html)
 
 ---
 

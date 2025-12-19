@@ -1,3 +1,9 @@
+> ⚠️ **Status: Historical / Archived**
+>
+> This document reflects the development process used while LULZprime was actively evolving.
+> The project is now a completed, reference-grade implementation.
+> This file is retained for context and provenance only.
+
 Part 0 of 9, Canonical Context and High-Level Abstraction (Agent Primer)
 0.1 Canonical reference
 * Canonical concept source: OMPC_v1.33.7lulz.pdf

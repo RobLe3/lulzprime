@@ -92,3 +92,6 @@ Thumbs.db
 
 # Editor artifacts
 .editorconfig.bak
+
+# Paper reference (external canonical)
+paper/

@@ -1,7 +1,7 @@
 """
 lulzprime – Prime resolution and navigation library based on OMPC.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 
 This library provides efficient prime number resolution using analytic
 forecasting + exact correction, without requiring full enumeration or sieving.

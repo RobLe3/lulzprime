@@ -4,7 +4,7 @@ Analytic forecasting for prime locations.
 Provides refined Prime Number Theorem approximations to estimate p_n.
 See docs/manual/part_5.md section 5.2 for workflow specification.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 Output class: Tier C (Estimate only)
 """
 

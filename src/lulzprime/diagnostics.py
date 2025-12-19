@@ -4,7 +4,7 @@ Diagnostics, verification, and self-checks.
 Provides observational tools for correctness validation and performance monitoring.
 See docs/manual/part_7.md for verification requirements.
 
-Canonical reference: paper/OMPC_v1.33.7lulz.pdf
+Canonical reference: https://roblemumin.com/library.html
 
 IMPORTANT: Diagnostics must observe only. They must never alter computational results.
 """

@@ -1,3 +1,9 @@
+> ⚠️ **Status: Historical / Archived**
+>
+> This document reflects the development process used while LULZprime was actively evolving.
+> The project is now a completed, reference-grade implementation.
+> This file is retained for context and provenance only.
+
 # Benchmark Policy
 
 **LULZprime – Benchmark Execution Rules and Time Caps**
