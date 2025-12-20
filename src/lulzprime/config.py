@@ -65,11 +65,11 @@ ENABLE_PARALLEL_PI = False  # Opt-in flag (not currently wired to auto-use)
 PARALLEL_PI_WORKERS = 8  # Default worker count (capped at min(cpu_count, 8))
 PARALLEL_PI_THRESHOLD = 1_000_000  # Minimum x for parallel (avoid overhead below)
 
-# Meissel π(x) configuration (opt-in, ADR 0005)
+# Meissel π(x) configuration (v0.2.0 default, ADR 0005)
 # Meissel-Lehmer with P2 correction (_pi_meissel) is implemented and validated
 # Performance: 8.33× faster than segmented sieve at 10M (π(x)-level benchmark)
 # Resolve-level evidence: segmented impractical at 150k+ (timeouts),
 #   Meissel completes 250k in 17.5s (>3.43× speedup vs >60s timeout)
-# This flag remains False pending integration approval
-ENABLE_LEHMER_PI = False  # Opt-in flag - DISABLED pending integration approval
+# ENABLED in v0.2.0 per docs/defaults.md section 8 (Meissel-Lehmer π(x) backend enabled by default)
+ENABLE_LEHMER_PI = True  # v0.2.0 default - activated for Tier B guarantees at large n
 LEHMER_PI_THRESHOLD = 250_000  # Evidence-backed from resolve validation (150k+ timeout)
