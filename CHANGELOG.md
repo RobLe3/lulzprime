@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-12-20
+
+### Fixed
+- CI reliability: Added `fail-fast: false` to workflow matrix for better diagnostics
+- Code formatting: Reformatted all source files with black 25.x
+- Linting cleanup: Fixed 60 ruff violations (import sorting, unused imports, deprecated typing annotations)
+- Configuration: Updated ruff config to use `lint.*` sections (deprecation fix)
+- README: Logo now renders correctly on PyPI (GitHub raw URL)
+
+### Changed
+- No algorithm changes
+- No API changes
+- No behavior changes
+- Configuration defaults unchanged (ENABLE_LEHMER_PI=False, LEHMER_PI_THRESHOLD=250000)
+
+## [0.1.0] - 2025-12-17
+
 ### Added
 - Initial repository structure
 - Documentation framework (autostart.md, defaults.md, manual parts 0-9)

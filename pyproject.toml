@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lulzprime"
-version = "0.1.0"
+version = "0.1.1"
 description = "Prime resolution and navigation library based on OMPC"
 readme = "README.md"
 requires-python = ">=3.10"
