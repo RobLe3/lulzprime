@@ -32,6 +32,7 @@ def simulate(
     initial_q: int = SIMULATOR_INITIAL_Q,
     beta_initial: float = SIMULATOR_BETA_INITIAL,
     beta_decay: float = SIMULATOR_BETA_DECAY,
+    anneal_tau: float | None = None,
 ) -> list[int] | tuple[list[int], list[dict]] | Generator[int, None, None]:
     """
     Generate pseudo-primes using OMPC negative feedback control.
@@ -44,11 +45,13 @@ def simulate(
     - Diagnostic access: Optional checkpoints for validation
     - Fast: No primality testing or sieving required
     - Memory-efficient: Generator mode streams results with O(1) memory
+    - Annealing: Optional β scheduling to reduce early transient variance
 
     INPUT CONSTRAINTS:
     - n_steps must be > 0
     - seed must be integer or None (None = non-deterministic)
     - as_generator and diagnostics cannot both be True (mutually exclusive)
+    - anneal_tau must be None or finite float > 0
     - All parameters must match expected types
 
     PERFORMANCE ENVELOPE:
@@ -89,6 +92,11 @@ def simulate(
     2. For each step: compute w(q_n), sample gap with tilted distribution, update q
     3. Optionally record diagnostics (list mode only)
 
+    Annealing Schedule (Part 5, section 2.1):
+    - If anneal_tau is None: β_eff(n) = beta_initial * (beta_decay)^n (existing behavior)
+    - If anneal_tau > 0: β_eff(n) = beta_initial * (1 - exp(-n / anneal_tau)) * (beta_decay)^n
+    - Exponential ramp-up from β≈0 early → β≈beta_initial later, reduces early variance
+
     Args:
         n_steps: Number of pseudo-primes to generate
         seed: Random seed for reproducibility (None = random)
@@ -97,6 +105,7 @@ def simulate(
         initial_q: Starting value (default 2)
         beta_initial: Initial inverse temperature for gap sampling
         beta_decay: Decay factor for beta annealing
+        anneal_tau: Annealing time constant (None = no annealing, >0 = gradual ramp-up)
 
     Returns:
         If as_generator=False and diagnostics=False: List of n_steps pseudo-primes
@@ -115,6 +124,10 @@ def simulate(
         >>> for q in simulate(1000000, seed=42, as_generator=True):
         ...     process(q)  # Stream without storing full list
 
+        >>> # Annealing for reduced early variance
+        >>> simulate(1000, seed=42, anneal_tau=10000)  # Gradual β ramp-up
+        [2, 3, 5, ...]  # More stable early behavior
+
         >>> # Verify determinism across modes
         >>> list_result = simulate(100, seed=1337)
         >>> gen_result = list(simulate(100, seed=1337, as_generator=True))
@@ -128,6 +141,17 @@ def simulate(
     """
     if n_steps <= 0:
         raise ValueError(f"n_steps must be > 0, got {n_steps}")
+
+    # Validate anneal_tau
+    if anneal_tau is not None:
+        if not isinstance(anneal_tau, (int, float)):
+            raise ValueError(
+                f"anneal_tau must be None or numeric, got {type(anneal_tau).__name__}"
+            )
+        if not math.isfinite(anneal_tau):
+            raise ValueError(f"anneal_tau must be finite, got {anneal_tau}")
+        if anneal_tau <= 0:
+            raise ValueError(f"anneal_tau must be > 0, got {anneal_tau}")
 
     # Validate mutually exclusive parameters
     if as_generator and diagnostics:
@@ -144,6 +168,7 @@ def simulate(
             initial_q=initial_q,
             beta_initial=beta_initial,
             beta_decay=beta_decay,
+            anneal_tau=anneal_tau,
         )
 
     # List mode (default): accumulate results in memory
@@ -171,9 +196,19 @@ def simulate(
         else:
             w = 1.0  # Default for small q
 
+        # Compute effective beta with optional annealing (Part 5 section 2.1)
+        if anneal_tau is not None:
+            # Annealing schedule: β_eff(n) = beta * (1 - exp(-n / anneal_tau))
+            # Exponential ramp-up from β≈0 early to β≈beta later
+            anneal_factor = 1.0 - math.exp(-n / anneal_tau)
+            beta_eff = beta * anneal_factor
+        else:
+            # No annealing: use beta as-is (backward compatible)
+            beta_eff = beta
+
         # Sample gap using tilted distribution per Part 5 section 5.7
-        # log P(g|w) = log P0(g) + beta*(1-w)*log g + C
-        tilted_dist = tilt_gap_distribution(base_distribution, w, beta)
+        # log P(g|w) = log P0(g) + beta_eff*(1-w)*log g + C
+        tilted_dist = tilt_gap_distribution(base_distribution, w, beta_eff)
         gap = sample_gap(tilted_dist)
 
         # Update q
@@ -190,7 +225,7 @@ def simulate(
                     "step": n,
                     "q": q_current,
                     "w": w,
-                    "beta": beta,
+                    "beta": beta_eff,  # Record effective beta
                     "gap": gap,
                 }
             )
@@ -206,6 +241,7 @@ def _simulate_generator(
     initial_q: int,
     beta_initial: float,
     beta_decay: float,
+    anneal_tau: float | None,
 ) -> Generator[int, None, None]:
     """
     Internal generator implementation for streaming simulation.
@@ -219,6 +255,7 @@ def _simulate_generator(
         initial_q: Starting value
         beta_initial: Initial inverse temperature
         beta_decay: Decay factor for beta annealing
+        anneal_tau: Annealing time constant (None = no annealing)
 
     Yields:
         Pseudo-prime values (NOT exact primes)
@@ -245,8 +282,18 @@ def _simulate_generator(
         else:
             w = 1.0
 
+        # Compute effective beta with optional annealing (Part 5 section 2.1)
+        if anneal_tau is not None:
+            # Annealing schedule: β_eff(n) = beta * (1 - exp(-n / anneal_tau))
+            # Exponential ramp-up from β≈0 early to β≈beta later
+            anneal_factor = 1.0 - math.exp(-n / anneal_tau)
+            beta_eff = beta * anneal_factor
+        else:
+            # No annealing: use beta as-is (backward compatible)
+            beta_eff = beta
+
         # Sample gap using tilted distribution
-        tilted_dist = tilt_gap_distribution(base_distribution, w, beta)
+        tilted_dist = tilt_gap_distribution(base_distribution, w, beta_eff)
         gap = sample_gap(tilted_dist)
 
         # Update q

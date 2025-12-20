@@ -221,3 +221,166 @@ class TestSimulatorGeneratorMode:
             assert False, "Generator should be exhausted"
         except StopIteration:
             pass  # Expected
+
+
+class TestSimulatorAnnealing:
+    """Test simulate() annealing functionality (Phase 2, Task 3)."""
+
+    def test_backward_compatibility_none_equals_no_param(self):
+        """Test that anneal_tau=None produces identical results to omitting the parameter."""
+        # Without anneal_tau parameter
+        result_no_param = lulzprime.simulate(200, seed=42)
+
+        # With anneal_tau=None (explicit)
+        result_explicit_none = lulzprime.simulate(200, seed=42, anneal_tau=None)
+
+        # Must be bit-for-bit identical for backward compatibility
+        assert (
+            result_no_param == result_explicit_none
+        ), "anneal_tau=None must preserve exact backward compatibility"
+
+    def test_annealing_determinism_same_seed(self):
+        """Test that same seed and same anneal_tau produce identical results."""
+        result1 = lulzprime.simulate(500, seed=1337, anneal_tau=1000)
+        result2 = lulzprime.simulate(500, seed=1337, anneal_tau=1000)
+
+        assert result1 == result2, "Annealed simulation must be deterministic with same seed"
+
+    def test_annealing_list_vs_generator_determinism(self):
+        """Test that list mode equals generator mode with annealing enabled."""
+        # List mode with annealing
+        list_result = lulzprime.simulate(300, seed=999, anneal_tau=5000)
+
+        # Generator mode with annealing
+        gen_result = list(lulzprime.simulate(300, seed=999, anneal_tau=5000, as_generator=True))
+
+        # Must be identical
+        assert (
+            list_result == gen_result
+        ), "List and generator modes must be identical with annealing"
+
+    def test_annealing_changes_behavior(self):
+        """Test that annealing produces different results from non-annealed (same seed)."""
+        # No annealing
+        result_no_anneal = lulzprime.simulate(500, seed=42)
+
+        # With annealing
+        result_with_anneal = lulzprime.simulate(500, seed=42, anneal_tau=1000)
+
+        # Should differ (annealing modifies β schedule)
+        assert (
+            result_no_anneal != result_with_anneal
+        ), "Annealing must produce different results from non-annealed"
+
+        # Both should be increasing sequences (sanity check)
+        for i in range(1, len(result_no_anneal)):
+            assert result_no_anneal[i] > result_no_anneal[i - 1]
+            assert result_with_anneal[i] > result_with_anneal[i - 1]
+
+    def test_annealing_different_tau_different_results(self):
+        """Test that different anneal_tau values produce different results."""
+        result_tau1000 = lulzprime.simulate(400, seed=42, anneal_tau=1000)
+        result_tau10000 = lulzprime.simulate(400, seed=42, anneal_tau=10000)
+
+        # Should differ (different annealing schedules)
+        assert (
+            result_tau1000 != result_tau10000
+        ), "Different anneal_tau values must produce different results"
+
+    def test_annealing_validation_zero(self):
+        """Test that anneal_tau=0 raises ValueError."""
+        with pytest.raises(ValueError, match="anneal_tau must be > 0"):
+            lulzprime.simulate(10, seed=42, anneal_tau=0)
+
+    def test_annealing_validation_negative(self):
+        """Test that negative anneal_tau raises ValueError."""
+        with pytest.raises(ValueError, match="anneal_tau must be > 0"):
+            lulzprime.simulate(10, seed=42, anneal_tau=-100)
+
+    def test_annealing_validation_inf(self):
+        """Test that anneal_tau=inf raises ValueError."""
+        with pytest.raises(ValueError, match="anneal_tau must be finite"):
+            lulzprime.simulate(10, seed=42, anneal_tau=float("inf"))
+
+    def test_annealing_validation_nan(self):
+        """Test that anneal_tau=NaN raises ValueError."""
+        with pytest.raises(ValueError, match="anneal_tau must be finite"):
+            lulzprime.simulate(10, seed=42, anneal_tau=float("nan"))
+
+    def test_annealing_validation_non_numeric(self):
+        """Test that non-numeric anneal_tau raises ValueError."""
+        with pytest.raises(ValueError, match="anneal_tau must be None or numeric"):
+            lulzprime.simulate(10, seed=42, anneal_tau="invalid")
+
+    def test_annealing_with_generator_mode(self):
+        """Test that annealing works correctly with generator mode."""
+        gen = lulzprime.simulate(200, seed=42, anneal_tau=2000, as_generator=True)
+
+        # Should be a generator
+        from typing import Generator
+
+        assert isinstance(gen, Generator)
+
+        # Convert to list and verify basic properties
+        result = list(gen)
+        assert len(result) == 200
+
+        # Should be increasing
+        for i in range(1, len(result)):
+            assert result[i] > result[i - 1]
+
+    def test_annealing_with_diagnostics(self):
+        """Test that annealing works with diagnostics mode."""
+        result, diag = lulzprime.simulate(200, seed=42, anneal_tau=1000, diagnostics=True)
+
+        # Check that we got results and diagnostics
+        assert isinstance(result, list)
+        assert len(result) == 200
+
+        assert isinstance(diag, list)
+        assert len(diag) > 0
+
+        # Diagnostics should record effective beta values
+        for entry in diag:
+            assert "beta" in entry
+            assert isinstance(entry["beta"], (int, float))
+            assert entry["beta"] >= 0  # Beta should be non-negative
+
+    def test_annealing_convergence_improvement(self):
+        """Test that annealing improves early convergence behavior."""
+        # This is a statistical test - annealing should reduce early variance
+        # Run both modes and check that annealed version has reasonable properties
+
+        # No annealing
+        result_no_anneal = lulzprime.simulate(1000, seed=42)
+
+        # With annealing
+        result_with_anneal = lulzprime.simulate(1000, seed=42, anneal_tau=5000)
+
+        # Both should produce valid sequences
+        assert len(result_no_anneal) == 1000
+        assert len(result_with_anneal) == 1000
+
+        # Both should be increasing
+        for i in range(1, len(result_no_anneal)):
+            assert result_no_anneal[i] > result_no_anneal[i - 1]
+            assert result_with_anneal[i] > result_with_anneal[i - 1]
+
+        # Note: We don't assert stronger convergence properties here
+        # as that would require more complex statistical analysis
+
+    def test_annealing_small_tau_fast_rampup(self):
+        """Test that small tau values cause fast β ramp-up."""
+        # Small tau (fast ramp-up)
+        result_small_tau = lulzprime.simulate(500, seed=42, anneal_tau=100)
+
+        # Large tau (slow ramp-up)
+        result_large_tau = lulzprime.simulate(500, seed=42, anneal_tau=50000)
+
+        # Should produce different sequences
+        assert result_small_tau != result_large_tau
+
+        # Both should be valid increasing sequences
+        for i in range(1, 500):
+            assert result_small_tau[i] > result_small_tau[i - 1]
+            assert result_large_tau[i] > result_large_tau[i - 1]
