@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2025-12-20
+
+### Fixed
+- Documentation: Updated all version references in README from 0.1.0 to current version
+
+### Note
+- No code changes from 0.1.1
+- PyPI does not allow replacing existing releases, hence 0.1.2 to ensure consistent documentation
+
 ## [0.1.1] - 2025-12-20
 
 ### Fixed
