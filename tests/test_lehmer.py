@@ -8,8 +8,8 @@ See docs/adr/0005-lehmer-pi.md for algorithm details.
 """
 
 import random
-import pytest
-from lulzprime.lehmer import lehmer_pi, pi_small, phi, _simple_sieve
+
+from lulzprime.lehmer import _simple_sieve, lehmer_pi, phi, pi_small
 from lulzprime.pi import pi
 
 
@@ -35,8 +35,7 @@ class TestLehmerPi:
         for x in test_values:
             expected = pi(x)
             actual = lehmer_pi(x)
-            assert actual == expected, \
-                f"lehmer_pi({x}) = {actual}, expected {expected} (from pi())"
+            assert actual == expected, f"lehmer_pi({x}) = {actual}, expected {expected} (from pi())"
 
     def test_lehmer_random_sample(self):
         """
@@ -54,8 +53,7 @@ class TestLehmerPi:
         for x in test_values:
             expected = pi(x)
             actual = lehmer_pi(x)
-            assert actual == expected, \
-                f"lehmer_pi({x}) = {actual}, expected {expected} (seed=42)"
+            assert actual == expected, f"lehmer_pi({x}) = {actual}, expected {expected} (seed=42)"
 
     def test_lehmer_edge_cases(self):
         """
@@ -76,8 +74,7 @@ class TestLehmerPi:
 
         for x, expected in edge_cases:
             actual = lehmer_pi(x)
-            assert actual == expected, \
-                f"lehmer_pi({x}) = {actual}, expected {expected}"
+            assert actual == expected, f"lehmer_pi({x}) = {actual}, expected {expected}"
 
     def test_lehmer_monotonicity(self):
         """
@@ -92,8 +89,9 @@ class TestLehmerPi:
 
         for x in test_values[1:]:
             count = lehmer_pi(x)
-            assert count >= prev_count, \
-                f"Monotonicity violated: π({prev_x}) = {prev_count}, π({x}) = {count}"
+            assert (
+                count >= prev_count
+            ), f"Monotonicity violated: π({prev_x}) = {prev_count}, π({x}) = {count}"
             prev_x = x
             prev_count = count
 
@@ -110,8 +108,9 @@ class TestLehmerPi:
             result2 = lehmer_pi(x)
             result3 = lehmer_pi(x)
 
-            assert result1 == result2 == result3, \
-                f"Determinism violated for x={x}: got {result1}, {result2}, {result3}"
+            assert (
+                result1 == result2 == result3
+            ), f"Determinism violated for x={x}: got {result1}, {result2}, {result3}"
 
     def test_lehmer_known_values(self):
         """
@@ -120,17 +119,18 @@ class TestLehmerPi:
         Validates against established prime counting results.
         """
         known_values = [
-            (10, 4),          # π(10) = 4: primes are 2, 3, 5, 7
-            (100, 25),        # π(100) = 25
-            (1_000, 168),     # π(1000) = 168
+            (10, 4),  # π(10) = 4: primes are 2, 3, 5, 7
+            (100, 25),  # π(100) = 25
+            (1_000, 168),  # π(1000) = 168
             (10_000, 1_229),  # π(10000) = 1229
-            (100_000, 9_592), # π(100000) = 9592
+            (100_000, 9_592),  # π(100000) = 9592
         ]
 
         for x, expected in known_values:
             actual = lehmer_pi(x)
-            assert actual == expected, \
-                f"lehmer_pi({x}) = {actual}, expected {expected} (known value)"
+            assert (
+                actual == expected
+            ), f"lehmer_pi({x}) = {actual}, expected {expected} (known value)"
 
 
 class TestPiSmall:
@@ -147,8 +147,7 @@ class TestPiSmall:
         for x in test_values:
             expected = pi(x)
             actual = pi_small(x)
-            assert actual == expected, \
-                f"pi_small({x}) = {actual}, expected {expected}"
+            assert actual == expected, f"pi_small({x}) = {actual}, expected {expected}"
 
     def test_pi_small_edge_cases(self):
         """Edge cases for pi_small()."""
@@ -227,8 +226,9 @@ class TestPhiFunction:
 
         expected = phi_xa_minus_1 - phi_x_div_pa
 
-        assert phi_xa == expected, \
-            f"φ({x}, {a}) recursive formula failed: got {phi_xa}, expected {expected}"
+        assert (
+            phi_xa == expected
+        ), f"φ({x}, {a}) recursive formula failed: got {phi_xa}, expected {expected}"
 
 
 class TestSimpleSieve:
@@ -249,5 +249,6 @@ class TestSimpleSieve:
         for limit in test_values:
             primes = _simple_sieve(limit)
             expected_count = pi(limit)
-            assert len(primes) == expected_count, \
-                f"len(_simple_sieve({limit})) = {len(primes)}, expected {expected_count}"
+            assert (
+                len(primes) == expected_count
+            ), f"len(_simple_sieve({limit})) = {len(primes)}, expected {expected_count}"

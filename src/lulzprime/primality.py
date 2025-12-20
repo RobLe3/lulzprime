@@ -8,7 +8,7 @@ Canonical reference: https://roblemumin.com/library.html
 Output class: Tier B (Verified within stated range)
 """
 
-from .config import SMALL_PRIMES, MILLER_RABIN_BASES_64BIT
+from .config import MILLER_RABIN_BASES_64BIT, SMALL_PRIMES
 
 
 def is_prime(n: int) -> bool:

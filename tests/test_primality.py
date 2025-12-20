@@ -5,6 +5,7 @@ Verifies implementation from docs/manual/part_5.md section 5.6.
 """
 
 import pytest
+
 import lulzprime
 
 
@@ -31,17 +32,13 @@ class TestIsPrime:
 
     def test_is_prime_large_primes(self):
         """Test is_prime() on larger known primes."""
-        large_primes = [
-            97, 541, 7919, 15485863, 32452843, 49979687, 67867967, 86028121
-        ]
+        large_primes = [97, 541, 7919, 15485863, 32452843, 49979687, 67867967, 86028121]
         for p in large_primes:
             assert lulzprime.is_prime(p), f"{p} should be prime"
 
     def test_is_prime_large_composites(self):
         """Test is_prime() on larger composites."""
-        composites = [
-            100, 1000, 10000, 15485864, 32452844
-        ]
+        composites = [100, 1000, 10000, 15485864, 32452844]
         for n in composites:
             assert not lulzprime.is_prime(n), f"{n} should not be prime"
 

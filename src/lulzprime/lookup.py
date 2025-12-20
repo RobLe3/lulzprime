@@ -7,11 +7,12 @@ See docs/manual/part_5.md section 5.3 for canonical workflow.
 Canonical reference: https://roblemumin.com/library.html
 """
 
-from typing import Callable, Optional
+from collections.abc import Callable
+
+from .diagnostics import ResolveStats
 from .forecast import forecast
 from .pi import pi
-from .primality import is_prime, prev_prime, next_prime
-from .diagnostics import ResolveStats
+from .primality import is_prime, next_prime, prev_prime
 
 
 def resolve_internal(index: int) -> int:
@@ -37,9 +38,7 @@ def resolve_internal(index: int) -> int:
 
 
 def resolve_internal_with_pi(
-    index: int,
-    pi_fn: Callable[[int], int],
-    stats: Optional[ResolveStats] = None
+    index: int, pi_fn: Callable[[int], int], stats: ResolveStats | None = None
 ) -> int:
     """
     Internal resolution pipeline with injected π(x) function.
@@ -67,9 +66,11 @@ def resolve_internal_with_pi(
 
     # Wrap pi_fn to count calls if stats is enabled
     if stats:
+
         def counted_pi_fn(x: int) -> int:
             stats.increment_pi_calls()
             return pi_fn(x)
+
     else:
         counted_pi_fn = pi_fn
 
@@ -113,7 +114,7 @@ def _binary_search_pi(
     target_index: int,
     guess: int,
     pi_fn: Callable[[int], int] = pi,
-    stats: Optional[ResolveStats] = None
+    stats: ResolveStats | None = None,
 ) -> int:
     """
     Binary search to find minimal x where π(x) >= target_index.
@@ -132,7 +133,7 @@ def _binary_search_pi(
     # to reduce binary search iterations. This cuts search space by ~2x.
     # Conservative bounds: 5% margin on each side (safer than analytic formula)
     lo = max(2, int(guess * 0.95))  # 5% below forecast
-    hi = int(guess * 1.05)           # 5% above forecast
+    hi = int(guess * 1.05)  # 5% above forecast
 
     # Adjust if initial bounds are wrong
     if pi_fn(lo) > target_index:

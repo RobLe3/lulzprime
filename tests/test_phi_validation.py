@@ -6,8 +6,8 @@ that commonly break recursive implementations.
 """
 
 import random
-import pytest
-from lulzprime.lehmer import phi, phi_bruteforce, _simple_sieve, pi_small
+
+from lulzprime.lehmer import _simple_sieve, phi, phi_bruteforce, pi_small
 
 
 class TestPhiValidation:
@@ -17,21 +17,20 @@ class TestPhiValidation:
         """Test φ against oracle for small (x, a) combinations."""
         primes = _simple_sieve(100)
         test_cases = [
-            (10, 0),   # a=0: should return x
-            (10, 1),   # First prime: 2
-            (10, 2),   # First 2 primes: 2, 3
-            (20, 2),   # Larger x
-            (20, 3),   # First 3 primes: 2, 3, 5
+            (10, 0),  # a=0: should return x
+            (10, 1),  # First prime: 2
+            (10, 2),  # First 2 primes: 2, 3
+            (20, 2),  # Larger x
+            (20, 3),  # First 3 primes: 2, 3, 5
             (30, 3),
-            (50, 4),   # First 4 primes: 2, 3, 5, 7
+            (50, 4),  # First 4 primes: 2, 3, 5, 7
             (100, 5),  # First 5 primes
         ]
 
         for x, a in test_cases:
             expected = phi_bruteforce(x, a, primes)
             actual = phi(x, a, primes, {})
-            assert actual == expected, \
-                f"φ({x}, {a}): expected {expected}, got {actual}"
+            assert actual == expected, f"φ({x}, {a}): expected {expected}, got {actual}"
 
     def test_phi_vs_bruteforce_reported_failure(self):
         """
@@ -45,8 +44,9 @@ class TestPhiValidation:
         expected = phi_bruteforce(x, a, primes)
         actual = phi(x, a, primes, {})
 
-        assert actual == expected, \
-            f"φ({x}, {a}): expected {expected}, got {actual} (difference: {actual - expected})"
+        assert (
+            actual == expected
+        ), f"φ({x}, {a}): expected {expected}, got {actual} (difference: {actual - expected})"
 
     def test_phi_edge_case_a_equals_zero(self):
         """φ(x, 0) should return x for any x >= 0."""
@@ -140,11 +140,11 @@ class TestPhiValidation:
         primes = _simple_sieve(30)
 
         test_cases = [
-            (3, 1),   # Just below 2^2
-            (4, 1),   # At 2^2
-            (5, 1),   # Just above 2^2
-            (8, 2),   # Just below 3^2
-            (9, 2),   # At 3^2
+            (3, 1),  # Just below 2^2
+            (4, 1),  # At 2^2
+            (5, 1),  # Just above 2^2
+            (8, 2),  # Just below 3^2
+            (9, 2),  # At 3^2
             (10, 2),  # Just above 3^2
             (24, 3),  # Just below 5^2
             (25, 3),  # At 5^2
@@ -154,8 +154,7 @@ class TestPhiValidation:
         for x, a in test_cases:
             expected = phi_bruteforce(x, a, primes)
             actual = phi(x, a, primes, {})
-            assert actual == expected, \
-                f"φ({x}, {a}): expected {expected}, got {actual}"
+            assert actual == expected, f"φ({x}, {a}): expected {expected}, got {actual}"
 
     def test_phi_medium_values(self):
         """Test φ for medium-sized values to stress memoization."""
@@ -172,8 +171,7 @@ class TestPhiValidation:
         for x, a in test_cases:
             expected = phi_bruteforce(x, a, primes)
             actual = phi(x, a, primes, {})
-            assert actual == expected, \
-                f"φ({x}, {a}): expected {expected}, got {actual}"
+            assert actual == expected, f"φ({x}, {a}): expected {expected}, got {actual}"
 
     def test_phi_memoization_consistency(self):
         """
@@ -195,8 +193,9 @@ class TestPhiValidation:
         # Call 3: Reuse memo1 (should still get same result)
         result3 = phi(x, a, primes, memo1)
 
-        assert result1 == result2 == result3, \
-            f"Inconsistent results: {result1}, {result2}, {result3}"
+        assert (
+            result1 == result2 == result3
+        ), f"Inconsistent results: {result1}, {result2}, {result3}"
 
         # Verify against oracle
         expected = phi_bruteforce(x, a, primes)
@@ -218,8 +217,9 @@ class TestPhiValidation:
             expected = phi_bruteforce(x, a, primes)
 
             assert result == expected, f"φ({x}, {a}): expected {expected}, got {result}"
-            assert result <= prev_result, \
-                f"φ({x}, {a}) = {result} should be <= φ({x}, {a-1}) = {prev_result}"
+            assert (
+                result <= prev_result
+            ), f"φ({x}, {a}) = {result} should be <= φ({x}, {a-1}) = {prev_result}"
 
             prev_result = result
 
@@ -241,8 +241,7 @@ class TestPhiValidation:
         for x, a in test_cases:
             expected = phi_bruteforce(x, a, primes)
             actual = phi(x, a, primes, {})
-            assert actual == expected, \
-                f"φ({x}, {a}): expected {expected}, got {actual}"
+            assert actual == expected, f"φ({x}, {a}): expected {expected}, got {actual}"
 
     def test_phi_randomized_comprehensive(self):
         """
@@ -257,22 +256,21 @@ class TestPhiValidation:
         test_cases = []
         for _ in range(50):
             x = random.randint(100, 20_000)
-            sqrt_x = int(x ** 0.5)
+            sqrt_x = int(x**0.5)
             max_a = pi_small(sqrt_x)  # a ≤ π(√x) is realistic for Meissel
             a = random.randint(1, max_a) if max_a > 0 else 0
             test_cases.append((x, a))
 
         # Generate primes once (enough for all test cases)
         max_x = max(x for x, _ in test_cases)
-        sqrt_max = int(max_x ** 0.5) + 1
+        sqrt_max = int(max_x**0.5) + 1
         primes = _simple_sieve(sqrt_max)
 
         # Validate each test case
         for x, a in test_cases:
             expected = phi_bruteforce(x, a, primes)
             actual = phi(x, a, primes, {})
-            assert actual == expected, \
-                f"φ({x}, {a}): expected {expected}, got {actual} (seed=42)"
+            assert actual == expected, f"φ({x}, {a}): expected {expected}, got {actual} (seed=42)"
 
     def test_phi_monotonicity_in_x(self):
         """
@@ -288,9 +286,10 @@ class TestPhiValidation:
         prev_phi = 0
         for x in x_values:
             phi_val = phi(x, a, primes, {})
-            assert phi_val >= prev_phi, \
-                f"Monotonicity violated: φ({x_values[x_values.index(x)-1]}, {a}) = {prev_phi}, " \
+            assert phi_val >= prev_phi, (
+                f"Monotonicity violated: φ({x_values[x_values.index(x)-1]}, {a}) = {prev_phi}, "
                 f"φ({x}, {a}) = {phi_val}"
+            )
             prev_phi = phi_val
 
     def test_phi_monotonicity_in_a(self):
@@ -305,8 +304,9 @@ class TestPhiValidation:
         prev_phi = x  # φ(x, 0) = x
         for a in range(1, 15):
             phi_val = phi(x, a, primes, {})
-            assert phi_val <= prev_phi, \
-                f"Monotonicity violated: φ({x}, {a-1}) = {prev_phi}, φ({x}, {a}) = {phi_val}"
+            assert (
+                phi_val <= prev_phi
+            ), f"Monotonicity violated: φ({x}, {a-1}) = {prev_phi}, φ({x}, {a}) = {phi_val}"
             prev_phi = phi_val
 
     def test_phi_recursion_invariant(self):
@@ -335,6 +335,7 @@ class TestPhiValidation:
             phi_x_div_pa = phi(x // p_a, a - 1, primes, {})
             expected = phi_xa_minus_1 - phi_x_div_pa
 
-            assert phi_xa == expected, \
-                f"Recursion invariant violated for φ({x}, {a}): " \
+            assert phi_xa == expected, (
+                f"Recursion invariant violated for φ({x}, {a}): "
                 f"got {phi_xa}, expected {expected} from formula"
+            )

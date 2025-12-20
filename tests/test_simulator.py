@@ -5,6 +5,7 @@ Verifies implementation from docs/manual/part_5.md section 5.7.
 """
 
 import pytest
+
 import lulzprime
 from lulzprime.diagnostics import simulator_diagnostics
 from lulzprime.pi import pi
@@ -48,16 +49,16 @@ class TestSimulator:
 
         # Check diagnostic structure
         for entry in diag:
-            assert 'step' in entry
-            assert 'q' in entry
-            assert 'w' in entry
+            assert "step" in entry
+            assert "q" in entry
+            assert "w" in entry
 
     def test_simulate_increasing_sequence(self):
         """Test that simulated sequence is strictly increasing."""
         result = lulzprime.simulate(100, seed=42)
 
         for i in range(1, len(result)):
-            assert result[i] > result[i-1], f"Not increasing at index {i}"
+            assert result[i] > result[i - 1], f"Not increasing at index {i}"
 
     def test_simulate_convergence(self):
         """Test that simulator shows expected convergence behavior."""
@@ -68,8 +69,8 @@ class TestSimulator:
         diag = simulator_diagnostics(result, pi)
 
         # Should show reasonable convergence (Part 7, section 7.4)
-        assert diag['convergence_acceptable'], "Simulator not converging properly"
-        assert abs(diag['density_ratio'] - 1.0) < 0.2, "Density ratio too far from 1.0"
+        assert diag["convergence_acceptable"], "Simulator not converging properly"
+        assert abs(diag["density_ratio"] - 1.0) < 0.2, "Density ratio too far from 1.0"
 
     def test_simulate_input_validation(self):
         """Test simulate() input validation."""

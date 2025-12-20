@@ -23,11 +23,11 @@ Phase 1 implementation (2025-12-17):
 
 import math
 import os
-from concurrent.futures import ProcessPoolExecutor, TimeoutError as FuturesTimeoutError
-from typing import Callable
-from .primality import is_prime
-from .config import SMALL_PRIMES, ENABLE_LEHMER_PI, LEHMER_PI_THRESHOLD
+from concurrent.futures import ProcessPoolExecutor
+
+from .config import ENABLE_LEHMER_PI, LEHMER_PI_THRESHOLD, SMALL_PRIMES
 from .lehmer import _pi_meissel
+from .primality import is_prime
 
 
 def _simple_sieve(limit: int) -> list[int]:
@@ -669,7 +669,7 @@ def pi_parallel(x: int, workers: int | None = None, threshold: int = 1_000_000) 
                 _count_segment_primes,
                 [seg[0] for seg in segments],  # segment_start values
                 [seg[1] for seg in segments],  # segment_end values
-                [small_primes] * len(segments)  # small_primes for each worker
+                [small_primes] * len(segments),  # small_primes for each worker
             )
 
         # Aggregate in deterministic order (map preserves segment order)

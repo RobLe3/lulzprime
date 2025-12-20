@@ -6,6 +6,7 @@ Tests guarantee tiers, input validation, and determinism.
 """
 
 import pytest
+
 import lulzprime
 
 
@@ -136,8 +137,14 @@ class TestGuaranteeTiers:
         """Tier A: resolve() returns exact p_n."""
         # Known primes for verification
         known = {
-            1: 2, 2: 3, 3: 5, 4: 7, 5: 11,
-            10: 29, 25: 97, 100: 541,
+            1: 2,
+            2: 3,
+            3: 5,
+            4: 7,
+            5: 11,
+            10: 29,
+            25: 97,
+            100: 541,
         }
         for index, expected_prime in known.items():
             assert lulzprime.resolve(index) == expected_prime

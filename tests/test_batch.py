@@ -8,8 +8,9 @@ See docs/api_contract.md for guarantee specifications.
 """
 
 import pytest
+
 import lulzprime
-from lulzprime.batch import resolve_many, between_many
+from lulzprime.batch import between_many, resolve_many
 
 
 class TestResolveManyCorrectness:
@@ -256,10 +257,7 @@ class TestBetweenManyEdgeCases:
         """Overlapping ranges are handled independently."""
         ranges = [(10, 20), (15, 25)]
         result = between_many(ranges)
-        expected = [
-            [11, 13, 17, 19],
-            [17, 19, 23]
-        ]
+        expected = [[11, 13, 17, 19], [17, 19, 23]]
         assert result == expected
 
     def test_empty_range_results(self):

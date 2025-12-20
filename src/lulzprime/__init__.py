@@ -23,11 +23,11 @@ Batch API (efficient multi-resolution):
 __version__ = "0.1.0"
 
 # Public API exports
-from .resolve import resolve, between, next_prime, prev_prime
+from .batch import between_many, resolve_many
 from .forecast import forecast
 from .primality import is_prime
+from .resolve import between, next_prime, prev_prime, resolve
 from .simulator import simulate
-from .batch import resolve_many, between_many
 
 __all__ = [
     "resolve",

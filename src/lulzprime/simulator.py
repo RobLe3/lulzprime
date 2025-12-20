@@ -10,23 +10,22 @@ Output class: Simulation output (non-exact), validated via diagnostics.
 WARNING: Simulation output is NOT exact primes. It is for testing and analysis only.
 """
 
-import random
 import math
-from typing import Optional
+import random
 
 from .config import (
+    SIMULATOR_BETA_DECAY,
+    SIMULATOR_BETA_INITIAL,
     SIMULATOR_DEFAULT_SEED,
     SIMULATOR_INITIAL_Q,
-    SIMULATOR_BETA_INITIAL,
-    SIMULATOR_BETA_DECAY,
 )
-from .gaps import get_empirical_gap_distribution, tilt_gap_distribution, sample_gap
+from .gaps import get_empirical_gap_distribution, sample_gap, tilt_gap_distribution
 
 
 def simulate(
     n_steps: int,
     *,
-    seed: Optional[int] = SIMULATOR_DEFAULT_SEED,
+    seed: int | None = SIMULATOR_DEFAULT_SEED,
     diagnostics: bool = False,
     initial_q: int = SIMULATOR_INITIAL_Q,
     beta_initial: float = SIMULATOR_BETA_INITIAL,
@@ -150,13 +149,15 @@ def simulate(
 
         # Record diagnostics if requested
         if diagnostics and n % 10 == 0:  # Sample sparsely
-            diagnostics_log.append({
-                'step': n,
-                'q': q_current,
-                'w': w,
-                'beta': beta,
-                'gap': gap,
-            })
+            diagnostics_log.append(
+                {
+                    "step": n,
+                    "q": q_current,
+                    "w": w,
+                    "beta": beta,
+                    "gap": gap,
+                }
+            )
 
     if diagnostics:
         return sequence, diagnostics_log

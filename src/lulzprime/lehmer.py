@@ -46,7 +46,6 @@ References:
 """
 
 import math
-from functools import lru_cache
 
 
 def _simple_sieve(limit: int) -> list[int]:
@@ -217,11 +216,11 @@ def _integer_cube_root(x: int) -> int:
         return 1
 
     # Initial guess using floating-point (will be refined)
-    k = int(x ** (1/3))
+    k = int(x ** (1 / 3))
 
     # Refine using Newton's method with integer arithmetic
     # Ensures we find the exact integer cube root
-    while k ** 3 > x:
+    while k**3 > x:
         k -= 1
     while (k + 1) ** 3 <= x:
         k += 1

@@ -8,8 +8,8 @@ Canonical reference: https://roblemumin.com/library.html
 Output class: Tier C (Estimate only)
 """
 
-from .config import SMALL_PRIMES, FORECAST_SMALL_THRESHOLD
-from .utils import log_n, log_log_n, validate_index
+from .config import FORECAST_SMALL_THRESHOLD, SMALL_PRIMES
+from .utils import log_log_n, log_n, validate_index
 
 
 def forecast(index: int) -> int:

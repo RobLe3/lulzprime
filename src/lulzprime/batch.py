@@ -9,11 +9,12 @@ See docs/api_contract.md for guarantee tiers and performance characteristics.
 Canonical reference: https://roblemumin.com/library.html
 """
 
-from typing import Iterable
-from .utils import validate_index, validate_range
+from collections.abc import Iterable
+
 from .lookup import resolve_internal_with_pi
-from .resolve import between as _between
 from .pi import pi as default_pi
+from .resolve import between as _between
+from .utils import validate_index
 
 
 def resolve_many(indices: Iterable[int]) -> list[int]:
@@ -162,9 +163,13 @@ def between_many(ranges: Iterable[tuple[int, int]]) -> list[list[int]]:
     for i, range_tuple in enumerate(ranges_list):
         # Validate tuple structure
         if not isinstance(range_tuple, tuple):
-            raise TypeError(f"Range at position {i} must be a tuple, got {type(range_tuple).__name__}")
+            raise TypeError(
+                f"Range at position {i} must be a tuple, got {type(range_tuple).__name__}"
+            )
         if len(range_tuple) != 2:
-            raise ValueError(f"Range at position {i} must be a 2-tuple (x, y), got length {len(range_tuple)}")
+            raise ValueError(
+                f"Range at position {i} must be a 2-tuple (x, y), got length {len(range_tuple)}"
+            )
 
         x, y = range_tuple
 
@@ -176,5 +181,3 @@ def between_many(ranges: Iterable[tuple[int, int]]) -> list[list[int]]:
             raise type(e)(f"Invalid range at position {i}: {e}") from None
 
     return results
-
-

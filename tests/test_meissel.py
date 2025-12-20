@@ -6,8 +6,8 @@ Tests both exact correctness and asymptotic behavior.
 """
 
 import random
-import pytest
-from lulzprime.lehmer import _pi_meissel, _integer_cube_root
+
+from lulzprime.lehmer import _integer_cube_root, _pi_meissel
 from lulzprime.pi import pi
 
 
@@ -36,7 +36,7 @@ class TestIntegerCubeRoot:
             actual = _integer_cube_root(x)
             assert actual == expected, f"∛{x}: expected {expected}, got {actual}"
             # Verify it's correct: actual^3 <= x < (actual+1)^3
-            assert actual ** 3 <= x
+            assert actual**3 <= x
             assert (actual + 1) ** 3 > x
 
     def test_cube_root_large_values(self):
@@ -51,7 +51,7 @@ class TestIntegerCubeRoot:
         for x in test_cases:
             cbrt = _integer_cube_root(x)
             # Verify correctness
-            assert cbrt ** 3 <= x
+            assert cbrt**3 <= x
             assert (cbrt + 1) ** 3 > x
 
     def test_cube_root_deterministic(self):
@@ -84,8 +84,9 @@ class TestMeisselPi:
         for x in test_values:
             expected = pi(x)
             actual = _pi_meissel(x)
-            assert actual == expected, \
-                f"_pi_meissel({x}) = {actual}, expected {expected} (from pi())"
+            assert (
+                actual == expected
+            ), f"_pi_meissel({x}) = {actual}, expected {expected} (from pi())"
 
     def test_meissel_known_values(self):
         """
@@ -94,17 +95,18 @@ class TestMeisselPi:
         Validates against established prime counting results.
         """
         known_values = [
-            (10, 4),          # π(10) = 4: primes are 2, 3, 5, 7
-            (100, 25),        # π(100) = 25
-            (1_000, 168),     # π(1000) = 168
+            (10, 4),  # π(10) = 4: primes are 2, 3, 5, 7
+            (100, 25),  # π(100) = 25
+            (1_000, 168),  # π(1000) = 168
             (10_000, 1_229),  # π(10000) = 1229
-            (100_000, 9_592), # π(100000) = 9592
+            (100_000, 9_592),  # π(100000) = 9592
         ]
 
         for x, expected in known_values:
             actual = _pi_meissel(x)
-            assert actual == expected, \
-                f"_pi_meissel({x}) = {actual}, expected {expected} (known value)"
+            assert (
+                actual == expected
+            ), f"_pi_meissel({x}) = {actual}, expected {expected} (known value)"
 
     def test_meissel_edge_cases(self):
         """
@@ -125,8 +127,7 @@ class TestMeisselPi:
 
         for x, expected in edge_cases:
             actual = _pi_meissel(x)
-            assert actual == expected, \
-                f"_pi_meissel({x}) = {actual}, expected {expected}"
+            assert actual == expected, f"_pi_meissel({x}) = {actual}, expected {expected}"
 
     def test_meissel_determinism(self):
         """
@@ -141,8 +142,9 @@ class TestMeisselPi:
             result2 = _pi_meissel(x)
             result3 = _pi_meissel(x)
 
-            assert result1 == result2 == result3, \
-                f"Determinism violated for x={x}: got {result1}, {result2}, {result3}"
+            assert (
+                result1 == result2 == result3
+            ), f"Determinism violated for x={x}: got {result1}, {result2}, {result3}"
 
     def test_meissel_randomized_validation(self):
         """
@@ -161,8 +163,9 @@ class TestMeisselPi:
         for x in test_values:
             expected = pi(x)
             actual = _pi_meissel(x)
-            assert actual == expected, \
-                f"_pi_meissel({x}) = {actual}, expected {expected} (seed=123)"
+            assert (
+                actual == expected
+            ), f"_pi_meissel({x}) = {actual}, expected {expected} (seed=123)"
 
     def test_meissel_monotonicity(self):
         """
@@ -177,8 +180,9 @@ class TestMeisselPi:
 
         for x in test_values[1:]:
             count = _pi_meissel(x)
-            assert count >= prev_count, \
-                f"Monotonicity violated: π({prev_x}) = {prev_count}, π({x}) = {count}"
+            assert (
+                count >= prev_count
+            ), f"Monotonicity violated: π({prev_x}) = {prev_count}, π({x}) = {count}"
             prev_x = x
             prev_count = count
 
@@ -197,8 +201,7 @@ class TestMeisselPi:
         for x in large_values:
             expected = pi(x)
             actual = _pi_meissel(x)
-            assert actual == expected, \
-                f"_pi_meissel({x}) = {actual}, expected {expected}"
+            assert actual == expected, f"_pi_meissel({x}) = {actual}, expected {expected}"
 
 
 class TestMeisselVsLegendre:
@@ -223,8 +226,9 @@ class TestMeisselVsLegendre:
         for x in test_values:
             expected = pi(x)
             actual = _pi_meissel(x)
-            assert actual == expected, \
-                f"Mismatch at x={x}: _pi_meissel={actual}, pi={expected}, diff={actual-expected}"
+            assert (
+                actual == expected
+            ), f"Mismatch at x={x}: _pi_meissel={actual}, pi={expected}, diff={actual-expected}"
 
     def test_randomized_comprehensive_validation(self):
         """
@@ -239,5 +243,6 @@ class TestMeisselVsLegendre:
         for x in test_values:
             expected = pi(x)
             actual = _pi_meissel(x)
-            assert actual == expected, \
-                f"Mismatch at x={x}: _pi_meissel={actual}, pi={expected} (seed=456)"
+            assert (
+                actual == expected
+            ), f"Mismatch at x={x}: _pi_meissel={actual}, pi={expected} (seed=456)"

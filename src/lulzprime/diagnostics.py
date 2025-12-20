@@ -9,8 +9,9 @@ Canonical reference: https://roblemumin.com/library.html
 IMPORTANT: Diagnostics must observe only. They must never alter computational results.
 """
 
-from typing import Any, Callable
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 
 def verify_resolution(result: int, index: int, pi_func: Callable, is_prime_func: Callable) -> bool:
@@ -35,9 +36,7 @@ def verify_resolution(result: int, index: int, pi_func: Callable, is_prime_func:
     """
     # Check primality
     if not is_prime_func(result):
-        raise AssertionError(
-            f"Resolution verification failed: result {result} is not prime"
-        )
+        raise AssertionError(f"Resolution verification failed: result {result} is not prime")
 
     # Check index
     pi_result = pi_func(result)
@@ -78,15 +77,15 @@ def verify_range(primes: list[int], is_prime_func: Callable) -> bool:
 
     # Check strictly increasing
     for i in range(1, len(primes)):
-        if primes[i] <= primes[i-1]:
-            raise AssertionError(
-                f"Range verification failed: not strictly increasing at index {i}"
-            )
+        if primes[i] <= primes[i - 1]:
+            raise AssertionError(f"Range verification failed: not strictly increasing at index {i}")
 
     return True
 
 
-def check_forecast_quality(index: int, forecast_value: int, pi_func: Callable, epsilon: float = 0.1) -> dict[str, Any]:
+def check_forecast_quality(
+    index: int, forecast_value: int, pi_func: Callable, epsilon: float = 0.1
+) -> dict[str, Any]:
     """
     Check forecast quality (Tier C sanity check).
 
@@ -109,10 +108,10 @@ def check_forecast_quality(index: int, forecast_value: int, pi_func: Callable, e
     relative_error = abs(pi_forecast - index) / index
 
     return {
-        'passed': relative_error < epsilon,
-        'relative_error': relative_error,
-        'pi_forecast': pi_forecast,
-        'threshold': epsilon,
+        "passed": relative_error < epsilon,
+        "relative_error": relative_error,
+        "pi_forecast": pi_forecast,
+        "threshold": epsilon,
     }
 
 
@@ -132,10 +131,9 @@ def simulator_diagnostics(sequence: list[int], pi_func: Callable) -> dict[str, A
     Returns:
         Dictionary with diagnostic metrics
     """
-    import math
 
     if not sequence:
-        return {'error': 'empty sequence'}
+        return {"error": "empty sequence"}
 
     n = len(sequence)
     q_final = sequence[-1]
@@ -151,24 +149,26 @@ def simulator_diagnostics(sequence: list[int], pi_func: Callable) -> dict[str, A
             q_i = sequence[i]
             pi_i = pi_func(q_i)
             ratio_i = pi_i / (i + 1)
-            checkpoints.append({
-                'step': i + 1,
-                'q': q_i,
-                'pi': pi_i,
-                'density_ratio': ratio_i,
-            })
+            checkpoints.append(
+                {
+                    "step": i + 1,
+                    "q": q_i,
+                    "pi": pi_i,
+                    "density_ratio": ratio_i,
+                }
+            )
 
     # Compute drift (deviation from expected ratio of 1.0)
     drift = abs(density_ratio - 1.0)
 
     return {
-        'n_steps': n,
-        'q_final': q_final,
-        'pi_final': pi_final,
-        'density_ratio': density_ratio,
-        'drift': drift,
-        'convergence_acceptable': drift < 0.15,  # Threshold from paper
-        'checkpoints': checkpoints,
+        "n_steps": n,
+        "q_final": q_final,
+        "pi_final": pi_final,
+        "density_ratio": density_ratio,
+        "drift": drift,
+        "convergence_acceptable": drift < 0.15,  # Threshold from paper
+        "checkpoints": checkpoints,
     }
 
 
@@ -188,6 +188,7 @@ class ResolveStats:
         forecast_value: Initial forecast estimate
         final_result: Final resolved prime value
     """
+
     pi_calls: int = 0
     binary_search_iterations: int = 0
     correction_backward_steps: int = 0
@@ -222,13 +223,14 @@ class ResolveStats:
     def to_dict(self) -> dict[str, Any]:
         """Convert stats to dictionary for reporting."""
         return {
-            'pi_calls': self.pi_calls,
-            'binary_search_iterations': self.binary_search_iterations,
-            'correction_backward_steps': self.correction_backward_steps,
-            'correction_forward_steps': self.correction_forward_steps,
-            'forecast_value': self.forecast_value,
-            'final_result': self.final_result,
+            "pi_calls": self.pi_calls,
+            "binary_search_iterations": self.binary_search_iterations,
+            "correction_backward_steps": self.correction_backward_steps,
+            "correction_forward_steps": self.correction_forward_steps,
+            "forecast_value": self.forecast_value,
+            "final_result": self.final_result,
         }
+
 
 @dataclass
 class MeisselStats:
@@ -245,6 +247,7 @@ class MeisselStats:
         recursion_depth_max: Maximum recursion depth reached
         recursion_guard_trips: Number of times recursion guard triggered
     """
+
     phi_calls: int = 0
     phi_cache_size: int = 0
     pi_cache_size: int = 0
@@ -274,9 +277,9 @@ class MeisselStats:
     def to_dict(self) -> dict[str, Any]:
         """Convert stats to dictionary for reporting."""
         return {
-            'phi_calls': self.phi_calls,
-            'phi_cache_size': self.phi_cache_size,
-            'pi_cache_size': self.pi_cache_size,
-            'recursion_depth_max': self.recursion_depth_max,
-            'recursion_guard_trips': self.recursion_guard_trips,
+            "phi_calls": self.phi_calls,
+            "phi_cache_size": self.phi_cache_size,
+            "pi_cache_size": self.pi_cache_size,
+            "recursion_depth_max": self.recursion_depth_max,
+            "recursion_guard_trips": self.recursion_guard_trips,
         }

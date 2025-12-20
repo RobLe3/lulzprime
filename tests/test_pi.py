@@ -5,7 +5,8 @@ Verifies implementation from docs/manual/part_4.md section 4.7.
 """
 
 import pytest
-from lulzprime.pi import pi, pi_range, pi_parallel, _create_segment_ranges, _count_segment_primes
+
+from lulzprime.pi import _count_segment_primes, _create_segment_ranges, pi, pi_parallel, pi_range
 
 
 class TestPi:
@@ -14,8 +15,19 @@ class TestPi:
     def test_pi_small_values(self):
         """Test π(x) on small values with known results."""
         known = {
-            0: 0, 1: 0, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4,
-            10: 4, 20: 8, 30: 10, 50: 15, 100: 25
+            0: 0,
+            1: 0,
+            2: 1,
+            3: 2,
+            4: 2,
+            5: 3,
+            6: 3,
+            7: 4,
+            10: 4,
+            20: 8,
+            30: 10,
+            50: 15,
+            100: 25,
         }
         for x, expected in known.items():
             assert pi(x) == expected, f"π({x}) should be {expected}"
@@ -47,7 +59,7 @@ class TestPi:
         # Test values just below and above threshold to ensure consistency
         # Threshold is 100,000 - test at boundary
         test_values = [
-            99999,   # Just below threshold (uses full sieve)
+            99999,  # Just below threshold (uses full sieve)
             100000,  # Exactly at threshold (uses segmented sieve)
             100001,  # Just above threshold (uses segmented sieve)
         ]
@@ -56,8 +68,7 @@ class TestPi:
         results = [pi(x) for x in test_values]
 
         # Verify monotonicity at threshold boundary
-        assert results[0] <= results[1] <= results[2], \
-            f"π(x) not monotone at threshold: {results}"
+        assert results[0] <= results[1] <= results[2], f"π(x) not monotone at threshold: {results}"
 
         # Verify known value at threshold
         assert results[1] == 9592, f"π(100000) should be 9592, got {results[1]}"
@@ -68,9 +79,9 @@ class TestPi:
         # Values chosen to test multiple segments (segment_size = 1,000,000)
         # Values verified against full sieve implementation
         known = {
-            250000: 22044,   # ~2.5 segments
-            500000: 41538,   # ~5 segments
-            750000: 60238,   # ~7.5 segments
+            250000: 22044,  # ~2.5 segments
+            500000: 41538,  # ~5 segments
+            750000: 60238,  # ~7.5 segments
         }
         for x, expected in known.items():
             result = pi(x)
@@ -79,7 +90,7 @@ class TestPi:
     def test_pi_segmented_vs_full_sieve(self):
         """Test that segmented and full sieve produce identical results."""
         # Import internal functions for direct testing
-        from lulzprime.pi import _simple_sieve, _segmented_sieve
+        from lulzprime.pi import _segmented_sieve, _simple_sieve
 
         # Test values where both methods can be used
         test_values = [10000, 50000, 99999]
@@ -87,8 +98,9 @@ class TestPi:
         for x in test_values:
             full_result = len(_simple_sieve(x))
             segmented_result = _segmented_sieve(x)
-            assert full_result == segmented_result, \
-                f"Mismatch at x={x}: full={full_result}, segmented={segmented_result}"
+            assert (
+                full_result == segmented_result
+            ), f"Mismatch at x={x}: full={full_result}, segmented={segmented_result}"
 
     def test_pi_monotonicity(self):
         """Test that π(x) is monotone increasing."""
@@ -96,7 +108,7 @@ class TestPi:
         pi_values = [pi(x) for x in values]
 
         for i in range(1, len(pi_values)):
-            assert pi_values[i] >= pi_values[i-1], "π(x) not monotone"
+            assert pi_values[i] >= pi_values[i - 1], "π(x) not monotone"
 
     def test_pi_input_validation(self):
         """Test π(x) input validation."""
@@ -208,8 +220,9 @@ class TestPiParallel:
         for x in test_values:
             result_parallel = pi_parallel(x)
             result_sequential = pi(x)
-            assert result_parallel == result_sequential, \
-                f"pi_parallel({x}) = {result_parallel} != pi({x}) = {result_sequential}"
+            assert (
+                result_parallel == result_sequential
+            ), f"pi_parallel({x}) = {result_parallel} != pi({x}) = {result_sequential}"
 
     def test_pi_parallel_correctness_large(self):
         """Test pi_parallel matches pi() for large values (above threshold)."""
@@ -219,8 +232,9 @@ class TestPiParallel:
         result_parallel = pi_parallel(x, workers=2)
         result_sequential = pi(x)
 
-        assert result_parallel == result_sequential == 78498, \
-            f"pi_parallel({x}) = {result_parallel} != pi({x}) = {result_sequential}"
+        assert (
+            result_parallel == result_sequential == 78498
+        ), f"pi_parallel({x}) = {result_parallel} != pi({x}) = {result_sequential}"
 
     def test_pi_parallel_determinism(self):
         """Test that pi_parallel is deterministic (same x yields same result)."""
@@ -231,8 +245,7 @@ class TestPiParallel:
         results = [pi_parallel(x, workers=workers) for _ in range(3)]
 
         # All results should be identical
-        assert len(set(results)) == 1, \
-            f"pi_parallel not deterministic: got {results}"
+        assert len(set(results)) == 1, f"pi_parallel not deterministic: got {results}"
 
     def test_pi_parallel_different_workers_same_result(self):
         """Test that different worker counts yield same result."""
@@ -243,8 +256,9 @@ class TestPiParallel:
         result_2 = pi_parallel(x, workers=2)
         result_4 = pi_parallel(x, workers=4)
 
-        assert result_1 == result_2 == result_4, \
-            f"Different worker counts gave different results: {result_1}, {result_2}, {result_4}"
+        assert (
+            result_1 == result_2 == result_4
+        ), f"Different worker counts gave different results: {result_1}, {result_2}, {result_4}"
 
     def test_pi_parallel_threshold_fallback(self):
         """Test that values below threshold use sequential path."""
@@ -319,8 +333,7 @@ class TestPiParallel:
 
         # Should be monotone increasing
         for i in range(1, len(results)):
-            assert results[i] >= results[i-1], \
-                f"pi_parallel not monotone at {values[i]}"
+            assert results[i] >= results[i - 1], f"pi_parallel not monotone at {values[i]}"
 
 
 class TestPiLehmer:
@@ -366,8 +379,9 @@ class TestPiLehmer:
         for x in test_values:
             lehmer_result = _pi_lehmer(x)
             sieve_result = _segmented_sieve(x)
-            assert lehmer_result == sieve_result, \
-                f"Mismatch at x={x}: lehmer={lehmer_result}, sieve={sieve_result}"
+            assert (
+                lehmer_result == sieve_result
+            ), f"Mismatch at x={x}: lehmer={lehmer_result}, sieve={sieve_result}"
 
     def test_pi_lehmer_edge_cases(self):
         """Test Lehmer π(x) edge cases."""
@@ -414,8 +428,9 @@ class TestPiLehmer:
         assert result_at > 0, f"pi({x_at}) should be positive"
 
         # Should be monotone
-        assert result_at >= result_below, \
-            f"pi({x_at}) = {result_at} should be >= pi({x_below}) = {result_below}"
+        assert (
+            result_at >= result_below
+        ), f"pi({x_at}) = {result_at} should be >= pi({x_below}) = {result_below}"
 
     def test_pi_with_lehmer_known_values(self):
         """Test pi() with Lehmer backend against known values."""
@@ -439,8 +454,9 @@ class TestPiLehmer:
 
         # Should be strictly increasing for distinct x
         for i in range(1, len(results)):
-            assert results[i] > results[i-1], \
-                f"_pi_lehmer not monotone increasing: π({values[i]}) = {results[i]} vs π({values[i-1]}) = {results[i-1]}"
+            assert (
+                results[i] > results[i - 1]
+            ), f"_pi_lehmer not monotone increasing: π({values[i]}) = {results[i]} vs π({values[i-1]}) = {results[i-1]}"
 
     def test_pi_threshold_dispatch(self):
         """Test that pi() dispatches to correct algorithm based on thresholds."""
@@ -462,10 +478,11 @@ class TestPiLehmer:
 
         # Verify monotonicity across all thresholds
         for i in range(1, len(results)):
-            x_prev, result_prev, _ = results[i-1]
+            x_prev, result_prev, _ = results[i - 1]
             x_curr, result_curr, _ = results[i]
-            assert result_curr >= result_prev, \
-                f"Non-monotone at threshold: π({x_curr}) = {result_curr} vs π({x_prev}) = {result_prev}"
+            assert (
+                result_curr >= result_prev
+            ), f"Non-monotone at threshold: π({x_curr}) = {result_curr} vs π({x_prev}) = {result_prev}"
 
     def test_phi_function_correctness(self):
         """Test φ(x, a) function correctness."""
@@ -504,24 +521,25 @@ class TestPiLehmer:
     def test_dispatch_with_flag_disabled(self):
         """Test that pi() uses segmented sieve when ENABLE_LEHMER_PI = False."""
         import lulzprime.config as config
-        from lulzprime.pi import pi, _segmented_sieve
-        
+        from lulzprime.pi import _segmented_sieve, pi
+
         # Save original flag
         original_flag = config.ENABLE_LEHMER_PI
         original_threshold = config.LEHMER_PI_THRESHOLD
-        
+
         try:
             # Explicitly disable flag
             config.ENABLE_LEHMER_PI = False
             config.LEHMER_PI_THRESHOLD = 250_000
-            
+
             # Test x > threshold - should still use segmented (flag disabled)
             x = 300_000
             result = pi(x)
             expected = _segmented_sieve(x)
-            
-            assert result == expected, \
-                f"With flag disabled, pi({x}) should use segmented: {result} == {expected}"
+
+            assert (
+                result == expected
+            ), f"With flag disabled, pi({x}) should use segmented: {result} == {expected}"
         finally:
             # Restore original flag
             config.ENABLE_LEHMER_PI = original_flag
@@ -530,32 +548,34 @@ class TestPiLehmer:
     def test_dispatch_with_flag_enabled(self):
         """Test that pi() uses Meissel when ENABLE_LEHMER_PI = True and x >= threshold."""
         import lulzprime.config as config
-        from lulzprime.pi import pi, _segmented_sieve
-        
+        from lulzprime.pi import _segmented_sieve, pi
+
         # Save original flag
         original_flag = config.ENABLE_LEHMER_PI
         original_threshold = config.LEHMER_PI_THRESHOLD
-        
+
         try:
             # Enable flag for this test
             config.ENABLE_LEHMER_PI = True
             config.LEHMER_PI_THRESHOLD = 250_000
-            
+
             # Test x >= threshold - should use Meissel (flag enabled)
             x = 250_000
             result = pi(x)
             expected = _segmented_sieve(x)  # Meissel should match segmented
-            
-            assert result == expected, \
-                f"With flag enabled, pi({x}) should use Meissel and match segmented: {result} == {expected}"
-            
+
+            assert (
+                result == expected
+            ), f"With flag enabled, pi({x}) should use Meissel and match segmented: {result} == {expected}"
+
             # Test x < threshold - should still use segmented (below threshold)
             x_below = 100_000
             result_below = pi(x_below)
             expected_below = _segmented_sieve(x_below)
-            
-            assert result_below == expected_below, \
-                f"Even with flag enabled, pi({x_below}) < threshold should use segmented"
+
+            assert (
+                result_below == expected_below
+            ), f"Even with flag enabled, pi({x_below}) < threshold should use segmented"
         finally:
             # Restore original flag
             config.ENABLE_LEHMER_PI = original_flag
@@ -565,24 +585,23 @@ class TestPiLehmer:
         """Test that Meissel via pi() dispatch is deterministic."""
         import lulzprime.config as config
         from lulzprime.pi import pi
-        
+
         # Save original flag
         original_flag = config.ENABLE_LEHMER_PI
         original_threshold = config.LEHMER_PI_THRESHOLD
-        
+
         try:
             # Enable Meissel dispatch
             config.ENABLE_LEHMER_PI = True
             config.LEHMER_PI_THRESHOLD = 250_000
-            
+
             x = 300_000
-            
+
             # Run multiple times
             results = [pi(x) for _ in range(3)]
-            
+
             # All results should be identical (determinism)
-            assert len(set(results)) == 1, \
-                f"Meissel via pi() not deterministic: got {results}"
+            assert len(set(results)) == 1, f"Meissel via pi() not deterministic: got {results}"
         finally:
             # Restore original flag
             config.ENABLE_LEHMER_PI = original_flag
@@ -591,18 +610,17 @@ class TestPiLehmer:
     def test_meissel_recursion_safety(self):
         """Test that _pi_meissel has recursion depth guard."""
         from lulzprime.lehmer import _pi_meissel
-        
+
         # Normal call should work
         result = _pi_meissel(100_000)
         assert result == 9592, f"_pi_meissel(100000) should be 9592, got {result}"
-        
+
         # Artificially trigger recursion limit by passing large depth
         # This simulates exceeding the safety bound
         try:
             # Calling with depth=51 should raise RecursionError (limit is 50)
             _ = _pi_meissel(100_000, _depth=51)
-            assert False, "Should have raised RecursionError for depth > 50"
+            raise AssertionError("Should have raised RecursionError for depth > 50")
         except RecursionError as e:
             # Expected - verify error message
-            assert "exceeds safe bound" in str(e), \
-                f"RecursionError should mention safe bound: {e}"
+            assert "exceeds safe bound" in str(e), f"RecursionError should mention safe bound: {e}"

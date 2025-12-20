@@ -8,7 +8,8 @@ Canonical reference: https://roblemumin.com/library.html
 """
 
 from .lookup import resolve_internal
-from .primality import next_prime as _next_prime, prev_prime as _prev_prime
+from .primality import next_prime as _next_prime
+from .primality import prev_prime as _prev_prime
 from .utils import validate_index, validate_range
 
 

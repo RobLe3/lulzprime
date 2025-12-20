@@ -4,11 +4,10 @@ Tests for resolve() function and resolution pipeline.
 Verifies workflow from docs/manual/part_5.md section 5.3.
 """
 
-import pytest
 import lulzprime
-from lulzprime.pi import pi
 from lulzprime.diagnostics import ResolveStats
 from lulzprime.lookup import resolve_internal_with_pi
+from lulzprime.pi import pi
 
 
 class TestResolve:
@@ -17,8 +16,31 @@ class TestResolve:
     def test_resolve_small_primes(self):
         """Test resolution of first 25 primes."""
         known_primes = [
-            2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,
-            53, 59, 61, 67, 71, 73, 79, 83, 89, 97
+            2,
+            3,
+            5,
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47,
+            53,
+            59,
+            61,
+            67,
+            71,
+            73,
+            79,
+            83,
+            89,
+            97,
         ]
         for i, expected in enumerate(known_primes, start=1):
             result = lulzprime.resolve(i)
@@ -84,6 +106,7 @@ class TestResolutionPipeline:
         minimal x where pi(x) >= index, but it must exist for spec compliance.
         """
         import inspect
+
         from lulzprime.lookup import resolve_internal_with_pi
 
         # Get source code of resolve_internal_with_pi (actual implementation)
@@ -91,10 +114,12 @@ class TestResolutionPipeline:
 
         # Verify both correction loops are present
         # (uses counted_pi_fn which wraps pi_fn for stats tracking)
-        assert "while counted_pi_fn(x) > index:" in source, \
-            "Missing backward correction: 'while counted_pi_fn(x) > index'"
-        assert "while counted_pi_fn(x) < index:" in source, \
-            "Missing forward correction: 'while counted_pi_fn(x) < index'"
+        assert (
+            "while counted_pi_fn(x) > index:" in source
+        ), "Missing backward correction: 'while counted_pi_fn(x) > index'"
+        assert (
+            "while counted_pi_fn(x) < index:" in source
+        ), "Missing forward correction: 'while counted_pi_fn(x) < index'"
 
         # Verify they use the correct navigation functions
         assert "prev_prime" in source, "Missing prev_prime for backward correction"
@@ -161,14 +186,14 @@ class TestResolveInstrumentation:
 
         stats_dict = stats.to_dict()
 
-        assert 'pi_calls' in stats_dict
-        assert 'binary_search_iterations' in stats_dict
-        assert 'correction_backward_steps' in stats_dict
-        assert 'correction_forward_steps' in stats_dict
-        assert 'forecast_value' in stats_dict
-        assert 'final_result' in stats_dict
+        assert "pi_calls" in stats_dict
+        assert "binary_search_iterations" in stats_dict
+        assert "correction_backward_steps" in stats_dict
+        assert "correction_forward_steps" in stats_dict
+        assert "forecast_value" in stats_dict
+        assert "final_result" in stats_dict
 
-        assert stats_dict['final_result'] == 541
+        assert stats_dict["final_result"] == 541
 
     def test_stats_disabled_by_default(self):
         """Verify stats are disabled by default (None)."""

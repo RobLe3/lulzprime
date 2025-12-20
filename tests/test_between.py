@@ -4,7 +4,6 @@ Tests for between() range resolution function.
 Verifies workflow from docs/manual/part_5.md section 5.4.
 """
 
-import pytest
 import lulzprime
 
 
@@ -44,11 +43,12 @@ class TestBetween:
 
         # Verify strictly increasing
         for i in range(1, len(result)):
-            assert result[i] > result[i-1]
+            assert result[i] > result[i - 1]
 
         # Verify completeness (no missing primes)
         # Check count matches difference in pi values
         from lulzprime.pi import pi
+
         expected_count = pi(150) - pi(99)
         assert len(result) == expected_count
 
@@ -58,7 +58,7 @@ class TestBetween:
 
         # Check ordering
         for i in range(1, len(result)):
-            assert result[i] > result[i-1], f"Not strictly increasing at index {i}"
+            assert result[i] > result[i - 1], f"Not strictly increasing at index {i}"
 
         # Check no duplicates
         assert len(result) == len(set(result)), "Contains duplicates"
