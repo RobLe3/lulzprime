@@ -1,17 +1,11 @@
-> ⚠️ **Status: Historical / Archived**
->
-> This document reflects the development process used while LULZprime was actively evolving.
-> The project is now a completed, reference-grade implementation.
-> This file is retained for context and provenance only.
-
 # autostart.md
-**LULZprime – Agent / Developer Startup Order, Consultation Priority, and Tracking Files**
+**LULZprime – Agent / Developer Startup Order, Consultation Priority, and Tracking Files (v0.2.0)**
 
 ---
 
 ## 0. Purpose
 
-This document defines the **startup procedure** for humans and agentic systems working on LULZprime.
+This document defines the **startup procedure** for humans and agentic systems working on LULZprime as of version **0.2.0** (released December 20, 2025).
 
 It answers:
 - which files must be parsed first,
@@ -29,222 +23,199 @@ This file is a **runbook**, the first operational entry point after cloning the 
 
 When there is any conflict or uncertainty, resolve by consulting sources in this order:
 
-1. `https://roblemumin.com/library.html`  
-2. `docs/manual/part_0.md` … `docs/manual/part_9.md`  
-3. `docs/defaults.md`  
-4. Source code under `src/lulzprime/`  
-5. Code comments
+1. The canonical OMPC paper located at `docs/paper/OMPC_v1.33.7lulz.pdf`  
+   **Rule: If in doubt, consult the paper first.**  
+2. `docs/0.2.0/` (current active development manual Parts 0–9 and version-specific guidance)  
+3. `docs/0.1.2/` (historical manual for v0.1.2)  
+4. `docs/defaults.md`  
+5. Source code under `src/lulzprime/`  
+6. Code comments
 
-Rule: **If in doubt, check the paper first.**  
-If the paper is not decisive, consult the manual next.
+If the local copy of the paper is not decisive, cross-reference the online source at `https://roblemumin.com/library.html`.
 
 ---
 
 ## 2. Required Development Tracking Files
 
-The following tracking files are mandatory and live in `docs/`:
+The following tracking files are mandatory and live directly in `docs/`:
 
 - `docs/milestones.md`  
-  Records completed achievements and accepted deliverables.
+  Records **completed, verified, and accepted** achievements and deliverables.
 
 - `docs/todo.md`  
-  Records planned work that is not started or not assigned to an active effort.
+  Records **planned work** that is identified but not yet started or actively in progress.
 
 - `docs/issues.md`  
-  Records bugs, regressions, required corrections, and deviations from the manual/spec.
+  Records **bugs, regressions, constraint violations, workflow deviations, performance regressions, and spec ambiguities**.
 
 These three files are the operational memory of the project.  
-They must stay short, current, and structured.
+They must remain short, current, structured, and reflect the state of v0.2.0.
 
 ---
 
 ## 3. One-Time Setup Parse Order (Fresh Clone)
 
-On a fresh clone, the required parse order is:
+On a fresh clone of v0.2.0, parse in this order:
 
 1. `docs/defaults.md`  
-   Establishes repo rules, what must never be committed, and overall scaffolding.
+   Establishes repo rules, structure, and hygiene.
 
-2. `docs/manual/part_0.md`  
-   Establishes the conceptual framing and how to interpret OMPC vs implementation.
+2. `docs/autostart.md` (this file)  
+   Establishes startup and tracking procedures.
 
-3. `docs/manual/part_1.md`  
-4. `docs/manual/part_2.md`  
-5. `docs/manual/part_3.md`  
-6. `docs/manual/part_4.md`  
-7. `docs/manual/part_5.md`  
-8. `docs/manual/part_6.md`  
-9. `docs/manual/part_7.md`  
-10. `docs/manual/part_8.md`  
-11. `docs/manual/part_9.md`  
+3. The canonical paper: `docs/paper/OMPC_v1.33.7lulz.pdf`  
+   Review core conjecture, equations, and claims.
 
-12. `docs/milestones.md`  
-13. `docs/todo.md`  
-14. `docs/issues.md`
+4. `docs/0.2.0/` folder contents  
+   - First: `part_0.md` through `part_9.md` (current active development manual)  
+   - Then: `release_notes.md`, `migration_guide.md`, `benchmarks_summary.md`, `activation_instructions.md` (version-specific guidance)
 
-15. Only then, parse code:  
+5. `docs/0.1.2/` folder contents (optional but recommended for context)  
+   Historical Parts 0–9 from the v0.1.2 development cycle.
+
+6. `docs/milestones.md`  
+   Review completed work and v0.2.0 deliverables.
+
+7. `docs/issues.md`  
+   Confirm no open critical issues.
+
+8. `docs/todo.md`  
+   Review any remaining planned work.
+
+9. Only then, parse code:  
    `src/lulzprime/__init__.py` and relevant modules.
 
-If any manual files are missing, the startup must stop and the gap must be repaired first.
+If any required file is missing or outdated, stop and repair before proceeding.
 
 ---
 
-## 4. Normal Daily Parse Order (Routine Work)
+## 4. Normal Daily Parse Order (Routine Work on v0.2.0+)
 
-At the start of any development session, parse in this order:
+At the start of any session:
 
 1. `docs/defaults.md`  
-2. `docs/manual/part_0.md`  
-3. `docs/manual/part_2.md` (goals and constraints refresh)  
-4. `docs/manual/part_4.md` (public API contract)  
-5. `docs/manual/part_5.md` (execution chains)  
-6. `docs/manual/part_7.md` (verification/self-check markers)  
-7. `docs/manual/part_9.md` (alignment measurement methods)
+2. `docs/autostart.md` (this file)  
+3. The canonical paper: `docs/paper/OMPC_v1.33.7lulz.pdf` (quick scan of relevant sections if needed)  
+4. `docs/0.2.0/part_0.md` (concept refresh)  
+5. `docs/0.2.0/part_2.md` (constraints)  
+6. `docs/0.2.0/part_4.md` (public API contracts)  
+7. `docs/0.2.0/part_6.md` (forecasting and π(x) backends)  
+8. `docs/0.2.0/part_9.md` (alignment and verification)
 
 Then consult current state:
-8. `docs/issues.md` (bugs/corrections first)  
-9. `docs/todo.md` (planned work)  
-10. `docs/milestones.md` (ensure no duplicate work)
+9. `docs/issues.md` → Address any open items first (bugs/regressions take priority)  
+10. `docs/todo.md` → Select next planned task  
+11. `docs/milestones.md` → Avoid duplicating completed work
 
-Then proceed into code changes.
-
----
-
-## 5. “If in Doubt” Consultation Order (Decision Procedure)
-
-When an agent or developer is uncertain about correctness, scope, or intent:
-
-1. Consult `https://roblemumin.com/library.html`  
-2. Consult `docs/manual/part_0.md` (concept primer)  
-3. Consult `docs/manual/part_2.md` (constraints)  
-4. Consult `docs/manual/part_4.md` (API contract)  
-5. Consult `docs/manual/part_5.md` (workflow)  
-6. Consult `docs/manual/part_8.md` (extension boundaries)  
-7. Consult `docs/defaults.md` (repo policy)  
-8. Consult existing tests under `tests/`  
-9. Only then consider proposing a change
-
-If uncertainty remains after step 7, the correct action is:
-- create an entry in `docs/issues.md` labeled `SPEC-AMBIGUITY`,
-- include the exact question, impacted files, and what was consulted,
-- and stop that change until resolved.
+Only then proceed to code changes.
 
 ---
 
-## 6. Update Rules for Tracking Files
+## 5. “If in Doubt” Consultation Order
 
-### 6.1 `docs/issues.md` (bugs, regressions, corrections)
+When uncertain about correctness, scope, or intent:
+
+1. The canonical paper: `docs/paper/OMPC_v1.33.7lulz.pdf`  
+2. `docs/0.2.0/` (current manual Parts 0–9)  
+3. `docs/0.1.2/` (historical context only)  
+4. `docs/defaults.md`  
+5. Existing tests under `tests/`  
+6. If still uncertain → create entry in `docs/issues.md` labeled `SPEC-AMBIGUITY` and stop change.
+
+---
+
+## 6. Update Rules for Tracking Files (v0.2.0)
+
+### 6.1 `docs/issues.md`
 Update **immediately** when:
-- a test fails,
-- a workflow deviates from Part 5,
-- a constraint is violated,
-- performance regresses beyond thresholds,
-- a scope boundary is accidentally crossed.
+- A test fails
+- A regression is detected
+- A constraint is violated (e.g., memory >25 MB)
+- Performance falls below v0.2.0 benchmarks
+- A scope boundary is crossed
+- Spec ambiguity arises
 
-This file is consulted **before** starting new features.  
-Issues must be triaged before expanding scope.
+Issues must be triaged before starting new features.
 
-### 6.2 `docs/todo.md` (planned work)
+### 6.2 `docs/todo.md`
 Update when:
-- a task is identified but not started,
-- a future enhancement is proposed,
-- work is deferred intentionally.
+- New enhancement is proposed and accepted
+- Work is deferred
+- Future optimization is identified
 
-Todo items must reference:
-- the manual part(s) they relate to,
-- the target module(s),
-- and the success criterion (what “done” means).
+Each item must reference:
+- Related manual part(s) in `docs/0.2.0/`
+- Target module(s)
+- Measurable success criterion
 
-### 6.3 `docs/milestones.md` (accepted achievements)
-Update only when:
-- work is complete,
-- tests and verification pass,
-- alignment checks in Part 9 are satisfied,
-- and scope integrity is maintained.
+### 6.3 `docs/milestones.md`
+Update **only** when:
+- A deliverable is fully complete
+- All tests and verification pass
+- Benchmarks confirm no regression
+- Alignment with OMPC paper is maintained
 
 Milestones must include:
-- deliverable summary,
-- goal mapping (G1–G7 from Part 9),
-- verification evidence location (tests/benchmarks),
-- version tag or commit reference (when used).
+- Summary
+- Goal mapping
+- Verification evidence (tests/benchmarks)
+- Commit/tag reference
 
 ---
 
-## 7. When Each File Must Be Read (Mandatory Triggers)
+## 7. Mandatory Triggers for Re-Reading Files
 
-### 7.1 Before any change to public API
-Read:
-- `docs/manual/part_4.md`
-- `docs/manual/part_7.md`
-- `docs/manual/part_9.md`
-Then log intended changes into `docs/issues.md` as `API-CHANGE-PROPOSAL`.
+### 7.1 Before changing public API
+Read: `docs/paper/OMPC_v1.33.7lulz.pdf`, `docs/0.2.0/part_4.md`, `docs/0.2.0/part_9.md` → Log as `API-CHANGE-PROPOSAL` in `issues.md`.
 
-### 7.2 Before any performance optimization
-Read:
-- `docs/manual/part_2.md`
-- `docs/manual/part_6.md`
-- `docs/manual/part_9.md`
-Then ensure performance regression thresholds remain satisfied.
+### 7.2 Before performance work
+Read: `docs/paper/OMPC_v1.33.7lulz.pdf` (pages 8–9), `docs/0.2.0/part_2.md`, `docs/0.2.0/part_6.md`, `docs/0.2.0/part_9.md`.
 
-### 7.3 Before any parallelism / scaling work
-Read:
-- `docs/manual/part_6.md`
-- `docs/manual/part_8.md`
-Then ensure it remains optional and does not couple into core.
+### 7.3 Before modifying π(x) or forecast backends
+Read: `docs/paper/OMPC_v1.33.7lulz.pdf` (pages 6–9), `docs/0.2.0/part_6.md`, historical notes in `docs/0.1.2/` if needed.
 
-### 7.4 Before any change to resolver workflow
-Read:
-- `https://roblemumin.com/library.html`
-- `docs/manual/part_5.md`
-- `docs/manual/part_7.md`
-Any workflow change must be logged as `WORKFLOW-CHANGE` in `docs/issues.md`.
+### 7.4 Before simulator changes
+Read: `docs/paper/OMPC_v1.33.7lulz.pdf` (pages 6–7), `docs/0.2.0/part_5.md`, historical convergence fixes in `docs/issues.md` or `docs/0.1.2/`.
 
 ---
 
 ## 8. Required End-of-Work Session Procedure
 
-At the end of any work session:
+At session end:
 
-1. Run tests.
-2. If failures exist: update `docs/issues.md` first.
-3. If tasks remain: update `docs/todo.md`.
-4. If a deliverable is complete and verified: update `docs/milestones.md`.
-5. Confirm no forbidden artifacts exist (per `docs/defaults.md`).
-6. Commit with a message referencing issues/todo entries when applicable.
-
----
-
-## 9. File Locations (Single Source of Truth)
-
-- Canonical paper:  
-  `https://roblemumin.com/library.html`
-
-- Manual:  
-  `docs/manual/part_0.md` … `docs/manual/part_9.md`
-
-- Repo defaults and hygiene rules:  
-  `docs/defaults.md`
-
-- Tracking files:  
-  `docs/milestones.md`  
-  `docs/todo.md`  
-  `docs/issues.md`
-
-- Code:  
-  `src/lulzprime/`
-
-- Tests:  
-  `tests/`
+1. Run full test suite.
+2. If failures: update `docs/issues.md`.
+3. If incomplete tasks: update `docs/todo.md`.
+4. If deliverable complete and verified: update `docs/milestones.md`.
+5. Confirm no forbidden artifacts (per `defaults.md`).
+6. Commit with message referencing relevant issue/todo/milestone.
 
 ---
 
-## 10. Success Condition
+## 9. File Locations (Single Source of Truth – v0.2.0)
 
-This autostart process is successful if:
-- agents and humans consult the right references in the right order,
+- Canonical paper: `docs/paper/OMPC_v1.33.7lulz.pdf`
+- Current manual & guidance: `docs/0.2.0/` (Parts 0–9 + release artifacts)
+- Historical manual: `docs/0.1.2/` (Parts 0–9 from v0.1.2)
+- Repo defaults: `docs/defaults.md`
+- Startup/runbook: `docs/autostart.md` (this file)
+- Tracking:
+  - `docs/milestones.md`
+  - `docs/todo.md`
+  - `docs/issues.md`
+- Code: `src/lulzprime/`
+- Tests: `tests/`
+
+---
+
+## 10. Success Condition (v0.2.0)
+
+This process is successful if:
+- references are consulted in correct order (paper first),
 - scope drift is prevented,
 - corrections are captured immediately,
-- milestones reflect verified deliverables,
-- and development remains aligned with the canonical OMPC reference.
+- milestones reflect verified v0.2.0 deliverables,
+- historical v0.1.2 context is preserved but not active,
+- and development remains aligned with the canonical OMPC reference in `docs/paper/`.
 
 End of document.

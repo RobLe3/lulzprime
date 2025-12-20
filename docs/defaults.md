@@ -1,18 +1,12 @@
-> ⚠️ **Status: Historical / Archived**
->
-> This document reflects the development process used while LULZprime was actively evolving.
-> The project is now a completed, reference-grade implementation.
-> This file is retained for context and provenance only.
-
 # defaults.md
-**LULZprime – Development Defaults, Repository Scaffold, and Operational Rules**
+**LULZprime – Development Defaults, Repository Scaffold, and Operational Rules (v0.2.0)**
 
 ---
 
 ## 0. Purpose and Scope
 
-This document defines the **non-negotiable development defaults** for the LULZprime project.  
-It serves as a **one-stop operational reference** for humans and agentic systems involved in development.
+This document defines the **non-negotiable development defaults** for the LULZprime project as of version **0.2.0** (released December 20, 2025).  
+It serves as a **one-stop operational reference** for humans and agentic systems.
 
 It specifies:
 - repository structure and layout,
@@ -34,10 +28,11 @@ This document is **binding**, not advisory.
 
 ### 1.2 Precedence order (highest to lowest)
 1. `https://roblemumin.com/library.html`
-2. `docs/manual/part_0.md` through `part_9.md`
-3. `docs/defaults.md` (this file)
-4. Source code
-5. Code comments
+2. `docs/0.2.0/` (current development manual and version guidance)
+3. `docs/0.1.2/` (historical manual for v0.1.2)
+4. `docs/defaults.md` (this file)
+5. Source code
+6. Code comments
 
 Any conflict must be resolved by moving **up** this list.
 
@@ -53,20 +48,115 @@ Any conflict must be resolved by moving **up** this list.
 - **Git identity:** `github@roblemumin.com`
 
 ### 2.3 Access method
-- Repository access is assumed via **SSH**, not HTTPS.
+- Repository access is via **SSH**, not HTTPS.
 - Local development uses the `git` CLI talking to GitHub over SSH.
 
 Expected remote form:
 git@github.com:RobLe3/lulzprime.git
+
 ---
 
-## 3. Default Repository Structure
+## 3. Default Repository Structure (v0.2.0)
 
-lulzprime/ ├── README.md ├── LICENSE ├── pyproject.toml ├── CHANGELOG.md ├── SECURITY.md ├── CONTRIBUTING.md ├── CODEOWNERS ├── .gitignore ├── .gitattributes ├── .editorconfig ├── .pre-commit-config.yaml │ ├── docs/ │ ├── defaults.md # THIS FILE │ ├── index.md │ ├── manual/ │ │ ├── part_0.md │ │ ├── part_1.md │ │ ├── part_2.md │ │ ├── part_3.md │ │ ├── part_4.md │ │ ├── part_5.md │ │ ├── part_6.md │ │ ├── part_7.md │ │ ├── part_8.md │ │ └── part_9.md │ ├── adr/ │ └── diagrams/ │ ├── paper/ │ └── OMPC_v1.33.7lulz.pdf │ ├── src/ │ └── lulzprime/ │ ├── init.py │ ├── resolve.py │ ├── forecast.py │ ├── lookup.py │ ├── pi.py │ ├── primality.py │ ├── simulator.py │ ├── gaps.py │ ├── diagnostics.py │ ├── config.py │ ├── utils.py │ └── types.py │ ├── tests/ │ ├── test_api_contracts.py │ ├── test_resolve.py │ ├── test_between.py │ ├── test_primality.py │ ├── test_pi.py │ ├── test_simulator.py │ └── fixtures/ │ ├── benchmarks/ │ ├── README.md │ ├── bench_resolve.py │ ├── bench_between.py │ └── results/ │ └── tools/ ├── validate_part_contracts.py ├── smoke_run.py └── release_checklist.md
-Rules:
+lulzprime/  
+├── README.md  
+├── LICENSE  
+├── pyproject.toml  
+├── CHANGELOG.md  
+├── SECURITY.md  
+├── CONTRIBUTING.md  
+├── CODEOWNERS  
+├── .gitignore  
+├── .gitattributes  
+├── .editorconfig  
+├── .pre-commit-config.yaml  
+│  
+├── docs/  
+│   ├── defaults.md                 # THIS FILE  
+│   ├── autostart.md  
+│   ├── index.md  
+│   ├── milestones.md  
+│   ├── todo.md  
+│   ├── issues.md  
+│   ├── adr/  
+│   ├── diagrams/  
+│   ├── paper/                      # Canonical location for the OMPC paper  
+│   │   └── OMPC_v1.33.7lulz.pdf  
+│   ├── 0.1.2/                      # Historical development manual for v0.1.2  
+│   │   ├── part_0.md  
+│   │   ├── part_1.md  
+│   │   ├── part_2.md  
+│   │   ├── part_3.md  
+│   │   ├── part_4.md  
+│   │   ├── part_5.md  
+│   │   ├── part_6.md  
+│   │   ├── part_7.md  
+│   │   ├── part_8.md  
+│   │   └── part_9.md  
+│   └── 0.2.0/                       # Current development manual and release artifacts  
+│       ├── part_0.md  
+│       ├── part_1.md  
+│       ├── part_2.md  
+│       ├── part_3.md  
+│       ├── part_4.md  
+│       ├── part_5.md  
+│       ├── part_6.md  
+│       ├── part_7.md  
+│       ├── part_8.md  
+│       ├── part_9.md  
+│       ├── release_notes.md  
+│       ├── migration_guide.md      # Guidance for upgrading from v0.1.2  
+│       ├── benchmarks_summary.md   # Curated performance results for v0.2.0  
+│       └── activation_instructions.md  # Config changes, Meissel-Lehmer activation, etc.  
+│  
+├── src/  
+│   └── lulzprime/  
+│       ├── __init__.py  
+│       ├── config.py  
+│       ├── utils.py  
+│       ├── types.py  
+│       ├── forecast.py  
+│       ├── primality.py  
+│       ├── pi.py  
+│       ├── lookup.py  
+│       ├── resolve.py  
+│       ├── simulator.py  
+│       ├── gaps.py  
+│       ├── diagnostics.py  
+│       └── lehmer.py                   # Dedicated Meissel-Lehmer backend module  
+│  
+├── tests/  
+│   ├── test_api_contracts.py  
+│   ├── test_resolve.py  
+│   ├── test_between.py  
+│   ├── test_primality.py  
+│   ├── test_pi.py  
+│   ├── test_simulator.py  
+│   └── fixtures/  
+│  
+├── benchmarks/  
+│   ├── README.md  
+│   ├── bench_resolve.py  
+│   ├── bench_between.py  
+│   └── results/  
+│  
+└── tools/  
+    ├── validate_part_contracts.py  
+    ├── smoke_run.py  
+    └── release_checklist.md  
+
+**Rules:**
 - All importable code lives under `src/lulzprime/`.
-- Documentation lives under `docs/`.
-- The paper lives under `paper/`.
+- Core tracking files live directly under `docs/`.
+- The canonical OMPC paper **must** reside in `docs/paper/`.
+- Historical development manual for v0.1.2 is archived in `docs/0.1.2/` (renamed from the original `docs/manual/`).
+- Current active development manual (Parts 0–9) and version-specific guidance for v0.2.0 reside in `docs/0.2.0/`.
+- Future releases will follow the same pattern (e.g., `docs/0.3.0/` containing the then-current manual).
+
+**v0.2.0 Specific Notes:**
+- The original `docs/manual/` has been renamed to `docs/0.1.2/` to preserve the exact v0.1.2 development context as immutable history.
+- A new, updated set of Parts 0–9 reflecting v0.2.0 refinements now lives in `docs/0.2.0/`.
+- Additional release artifacts (notes, migration, benchmarks) are also in `docs/0.2.0/`.
 
 ---
 
@@ -75,20 +165,13 @@ Rules:
 ### 4.1 Absolute exclusions
 The following must **never** be uploaded to the repository:
 
-- SSH keys and certificates:  
-  `id_rsa`, `id_ed25519`, `*.pem`, `*.key`, `*.p12`, `*.pfx`
-- Secrets and tokens:  
-  `.env`, `.env.*`, `*secret*`, `*token*`, `*apikey*`
-- Credential caches:  
-  `.netrc`, keychains, browser profiles
-- Virtual environments:  
-  `.venv/`, `venv/`
-- Build outputs:  
-  `dist/`, `build/`, `*.whl`, `*.egg-info/`
-- Coverage and test noise:  
-  `.coverage`, `htmlcov/`, `.pytest_cache/`
-- IDE and OS artifacts:  
-  `.DS_Store`, `Thumbs.db`, `.idea/`, `.vscode/`
+- SSH keys and certificates: `id_rsa`, `id_ed25519`, `*.pem`, `*.key`, `*.p12`, `*.pfx`
+- Secrets and tokens: `.env`, `.env.*`, `*secret*`, `*token*`, `*apikey*`
+- Credential caches: `.netrc`, keychains, browser profiles
+- Virtual environments: `.venv/`, `venv/`
+- Build outputs: `dist/`, `build/`, `*.whl`, `*.egg-info/`
+- Coverage and test noise: `.coverage`, `htmlcov/`, `.pytest_cache/`
+- IDE and OS artifacts: `.DS_Store`, `Thumbs.db`, `.idea/`, `.vscode/`
 - Large generated prime tables
 - Raw benchmark dumps or massive data files
 - Agent logs containing internal system prompts or traces
@@ -113,17 +196,20 @@ The project favors **explicit ignores over accidental leaks**.
 
 ## 6. Documentation Handling Rules
 
-### 6.1 Manual
-- The development manual is split into Parts 0–9.
-- Files live under `docs/manual/`.
-- Each part is versioned, short, and scoped.
+### 6.1 Historical Manual (v0.1.2)
+- Archived in `docs/0.1.2/` (Parts 0–9).
+- Treated as immutable unless correcting reproducibility issues.
 
-### 6.2 Canonical paper
-- `https://roblemumin.com/library.html` must exist in the repo.
+### 6.2 Current Manual (v0.2.0)
+- Active Parts 0–9 live in `docs/0.2.0/`.
+- This is the living development manual for ongoing work.
+
+### 6.3 Canonical paper
+- Stored in `docs/paper/OMPC_v1.33.7lulz.pdf`.
 - Long verbatim excerpts must **not** be copied into docs.
 - Docs may summarize and reference, not reproduce.
 
-### 6.3 Diagrams
+### 6.4 Diagrams
 - Store diagram **sources**, not massive rendered exports.
 - Prefer Mermaid, SVG source, or draw.io XML.
 
@@ -142,19 +228,18 @@ The project favors **explicit ignores over accidental leaks**.
 - Full prime tables
 - Scratch notebooks without curation
 
-Large artifacts must be:
-- generated on demand, or
-- stored externally and documented.
+Large artifacts must be generated on demand or stored externally.
 
 ---
 
 ## 8. Build, Test, and Quality Defaults
 
 - Packaging via `pyproject.toml`
-- `src/` layout is mandatory
-- Tests via `pytest`
-- Public API contract tests are mandatory
-- Performance regressions are tracked (see Part 9)
+- `src/` layout mandatory
+- Tests via `pytest` (target: 200+ passing tests)
+- Public API contract tests mandatory
+- Performance regressions tracked (benchmarks/results/)
+- Meissel-Lehmer π(x) backend enabled by default (`ENABLE_LEHMER_PI = True`)
 
 No merge is acceptable without passing tests.
 
@@ -164,8 +249,7 @@ No merge is acceptable without passing tests.
 
 ### 9.1 Branches
 - `main` is always releasable
-- Feature branches:  
-  `feat/<topic>`, `fix/<topic>`, `docs/<topic>`
+- Feature branches: `feat/<topic>`, `fix/<topic>`, `docs/<topic>`
 
 ### 9.2 Releases
 - Semantic versioning
@@ -178,7 +262,8 @@ No merge is acceptable without passing tests.
 
 Any contributor or agent must:
 - read this file before making changes,
-- follow Parts 0–9 of the manual,
+- consult `docs/0.2.0/` for current manual and guidance,
+- reference `docs/0.1.2/` only for historical context,
 - respect scope and non-goals,
 - defer to the paper when uncertain.
 
@@ -192,7 +277,7 @@ This document is **binding**.
 
 If a contribution violates:
 - `defaults.md`,
-- the manual,
+- current version guidance,
 - or the canonical paper,
 
 it must be rejected or reverted.
@@ -205,8 +290,8 @@ it must be rejected or reverted.
 - repository hygiene remains clean,
 - no sensitive artifacts leak,
 - development remains reproducible,
-- agentic systems stay within scope,
-- and the project remains aligned with  
-  `OMPC_v1.33.7lulz.pdf`.
+- historical v0.1.2 manual is preserved in `docs/0.1.2/`,
+- current manual and guidance are centralized in `docs/0.2.0/`,
+- and the project remains aligned with `OMPC_v1.33.7lulz.pdf`.
 
 End of document.
