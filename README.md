@@ -172,7 +172,7 @@ This reframes primes from a brute-force enumeration problem into a navigable spa
 
 ## Maintenance Status
 
-**Current Status:** Completed reference implementation (v0.1.0)
+**Current Status:** Completed reference implementation (v0.1.1)
 
 LULZprime is a **finished artifact**. The implementation has achieved full paper alignment and is production-ready for indices up to 500k.
 
@@ -274,7 +274,7 @@ https://roblemumin.com/library.html
 
 ---
 
-**Status**: v0.1.0 - Full paper alignment achieved ✓
+**Status**: v0.1.1 - Full paper alignment achieved ✓
 
 **Test Coverage**: 169/169 passing
 **Validation**: resolve(500k) measured at 73.044s with Meissel backend
