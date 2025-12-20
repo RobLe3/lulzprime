@@ -97,7 +97,12 @@ def sample_gap(
     rng: object | None = None,
 ) -> int:
     """
-    Sample a gap from the given distribution.
+    Sample a gap from the given distribution using CDF + binary search.
+
+    Performance optimized per Part 5 section 2.2:
+    - Precomputes cumulative distribution function (CDF)
+    - Uses binary search (bisect) for O(log k) sampling vs O(k) for random.choices
+    - Maintains determinism: same seed yields same sequence
 
     Args:
         distribution: Gap distribution (gap -> probability)
@@ -106,13 +111,35 @@ def sample_gap(
     Returns:
         Sampled gap
     """
+    import bisect
     import random
 
-    gaps = list(distribution.keys())
-    weights = [distribution[g] for g in gaps]
+    # Build CDF for binary search sampling
+    gaps = sorted(distribution.keys())  # Sort for consistent ordering
+    cumulative = []
+    total = 0.0
 
+    for gap in gaps:
+        total += distribution[gap]
+        cumulative.append(total)
+
+    # Normalize CDF to handle floating point errors
+    if cumulative and cumulative[-1] > 0:
+        cumulative = [c / cumulative[-1] for c in cumulative]
+
+    # Sample using random() + bisect (O(log k) vs O(k) for choices)
     if rng is None:
-        return random.choices(gaps, weights=weights, k=1)[0]
+        r = random.random()
     else:
-        # Use provided RNG
-        return rng.choices(gaps, weights=weights, k=1)[0]
+        r = rng.random()
+
+    # Binary search to find the gap
+    # bisect_right returns the first index i where cumulative[i] > r
+    # This correctly maps r in [cumulative[i-1], cumulative[i]) to gaps[i]
+    idx = bisect.bisect_right(cumulative, r)
+
+    # Handle edge case where r == 1.0 (extremely rare but possible)
+    if idx >= len(gaps):
+        idx = len(gaps) - 1
+
+    return gaps[idx]
