@@ -1,0 +1,164 @@
+"""
+Minimal command-line interface for lulzprime.
+
+Provides basic CLI commands for common operations.
+Part of Phase 3 (Usability) enhancements.
+
+Usage:
+    python -m lulzprime resolve <n>
+    python -m lulzprime pi <x>
+    python -m lulzprime simulate <n_steps> [--seed SEED] [--anneal-tau TAU] [--generator]
+"""
+
+import argparse
+import sys
+
+
+def cmd_resolve(args):
+    """Execute resolve command."""
+    from . import resolve
+
+    try:
+        index = int(args.n)
+        if index < 1:
+            print(f"Error: index must be >= 1, got {index}", file=sys.stderr)
+            return 1
+
+        result = resolve(index)
+        print(result)
+        return 0
+
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_pi(args):
+    """Execute pi command."""
+    from .pi import pi
+
+    try:
+        x = int(args.x)
+        if x < 2:
+            print(f"Error: x must be >= 2, got {x}", file=sys.stderr)
+            return 1
+
+        result = pi(x)
+        print(result)
+        return 0
+
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_simulate(args):
+    """Execute simulate command."""
+    from . import simulate
+
+    try:
+        n_steps = int(args.n_steps)
+        if n_steps <= 0:
+            print(f"Error: n_steps must be > 0, got {n_steps}", file=sys.stderr)
+            return 1
+
+        # Build kwargs
+        kwargs = {}
+        if args.seed is not None:
+            kwargs["seed"] = int(args.seed)
+        if args.anneal_tau is not None:
+            tau = float(args.anneal_tau)
+            if tau <= 0:
+                print(f"Error: anneal_tau must be > 0, got {tau}", file=sys.stderr)
+                return 1
+            kwargs["anneal_tau"] = tau
+        if args.generator:
+            kwargs["as_generator"] = True
+
+        # Execute
+        result = simulate(n_steps, **kwargs)
+
+        # Output
+        if args.generator:
+            # Stream one value per line
+            for value in result:
+                print(value)
+        else:
+            # List mode: output all values, one per line
+            for value in result:
+                print(value)
+
+        return 0
+
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
+def main():
+    """Main CLI entry point."""
+    parser = argparse.ArgumentParser(
+        prog="lulzprime",
+        description="LULZprime - Prime resolution and OMPC simulation library",
+        epilog="For more info: https://github.com/RobLe3/lulzprime",
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # resolve command
+    parser_resolve = subparsers.add_parser(
+        "resolve", help="Compute the exact nth prime p_n"
+    )
+    parser_resolve.add_argument("n", type=str, help="Prime index (1-based)")
+
+    # pi command
+    parser_pi = subparsers.add_parser(
+        "pi", help="Compute π(x) - the number of primes <= x"
+    )
+    parser_pi.add_argument("x", type=str, help="Upper bound")
+
+    # simulate command
+    parser_simulate = subparsers.add_parser(
+        "simulate", help="Generate pseudo-primes using OMPC simulation"
+    )
+    parser_simulate.add_argument("n_steps", type=str, help="Number of steps to simulate")
+    parser_simulate.add_argument(
+        "--seed", type=str, default=None, help="Random seed for reproducibility"
+    )
+    parser_simulate.add_argument(
+        "--anneal-tau",
+        type=str,
+        default=None,
+        help="Annealing time constant (>0, optional)",
+    )
+    parser_simulate.add_argument(
+        "--generator",
+        action="store_true",
+        help="Stream results (low memory mode)",
+    )
+
+    args = parser.parse_args()
+
+    # Dispatch
+    if args.command == "resolve":
+        return cmd_resolve(args)
+    elif args.command == "pi":
+        return cmd_pi(args)
+    elif args.command == "simulate":
+        return cmd_simulate(args)
+    else:
+        parser.print_help()
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
