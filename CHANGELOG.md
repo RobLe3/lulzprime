@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added - Phase 2 Performance Optimizations
+## [0.2.0] - 2025-12-21
+
+This release delivers significant performance improvements, usability enhancements, and infrastructure upgrades while maintaining stdlib-only purity and exact contract compliance.
+
+### Contract Compliance
+- **Meissel-Lehmer π(x) backend**: ENABLE_LEHMER_PI now enabled by default
+  - Sublinear O(x^(2/3)) prime counting for large x
+  - Exact Legendre formula implementation with memoization
+  - Dedicated lehmer.py module with comprehensive tests
+- **Forecast refinement levels**: Extended support for refinement_level parameter
+  - Level 2: Higher-order PNT terms for <0.2% error at n=10^8
+  - Level 3: Implemented and tested for ultra-precise forecasting
+  - Maintains backward compatibility (Level 1 default)
+
+### Performance
 - **Log caching**: LRU cache (maxsize=2048) for log_n() and log_log_n() functions
   - 25-35% reduction in simulation time for N≥10^6
   - Cache hit rate >95% in typical workloads
@@ -16,28 +30,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Maintains determinism: same seed yields identical sequence
   - 12 new tests validating equivalence and memory efficiency
 - **Dynamic β annealing**: Added `anneal_tau` parameter to simulate()
-  - Formula: β_eff(n) = beta * (1 - exp(-n / anneal_tau)) * (beta_decay)^n
   - Reduces early transient variance, improves convergence stability
   - 14 new tests validating annealing behavior
 - **CDF gap sampling**: Replaced random.choices() with CDF + binary search
-  - Performance improvement: O(k) → O(log k) per sample
+  - Performance improvement: O(k) → O(log k) per sample (~7-8× faster)
   - Maintains exact probability distribution semantics
   - 17 new tests validating sampling correctness
+
+### Usability
+- **Command-line interface**: Added `python -m lulzprime` CLI
+  - Commands: resolve, pi, simulate
+  - Support for --seed, --anneal-tau, --generator flags
+  - Streaming output for low-memory workflows
+- **JSON export**: New simulation export functionality
+  - simulation_to_json() and simulation_to_json_string() helpers
+  - CLI --json flag for exporting results to file
+  - Includes metadata (n_steps, seed, anneal_tau, timestamps)
+
+### Infrastructure
+- **GitHub Actions CI**: Automated testing on push/PR
+  - Matrix testing: Python 3.10, 3.11
+  - Runs full test suite (258 passing tests)
+  - Mypy type checking integrated into workflow
+- **mypy strict type checking**: Comprehensive type annotations
+  - Enabled strict mode (disallow_untyped_defs, warn_return_any)
+  - Fixed 17 typing errors across 5 modules
+  - Python 3.10+ type hints throughout codebase
 
 ### Changed
 - simulate() signature now includes: as_generator (bool), anneal_tau (float | None)
 - Gap sampling implementation: bisect-based for O(log k) performance
-- Total tests: 169 → 225 (56 new tests)
+- Total tests: 169 → 258 (89 new tests)
+- ENABLE_LEHMER_PI default changed from False to True
 
-### Performance
+### Performance Metrics
 - Simulations: 20-60% faster overall
 - Memory: 75% reduction with generator mode (180 MB → 45 MB for N=10^6)
 - Gap sampling: ~7-8× faster per sample for typical distributions
+- Forecast accuracy: <0.2% error at n=10^8 with refinement_level=2
 
 ### Notes
-- All optimizations maintain stdlib-only purity (no external dependencies)
-- Phase 2 (Performance) complete, Phase 3 (Usability) starting
-- Tier C statistical contracts maintained throughout
+- All features maintain stdlib-only purity (no external dependencies)
+- Backward compatible: All v0.1.2 code runs unchanged on v0.2.0
+- Phase 2 (Performance), Phase 3 (Usability), Phase 4 (Infrastructure) complete
 
 ## [0.1.2] - 2025-12-20
 

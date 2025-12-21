@@ -41,21 +41,21 @@ LULZprime is a Python library for efficient prime number resolution using analyt
 
 See `docs/PAPER_ALIGNMENT_STATUS.md` for complete performance analysis and validation results.
 
-### Enable Meissel Backend
+### Meissel-Lehmer Backend
 
-The Meissel-Lehmer backend provides O(x^(2/3)) sublinear complexity for large indices. It's opt-in by default:
+The Meissel-Lehmer backend provides O(x^(2/3)) sublinear complexity for large indices. **Enabled by default in v0.2.0.**
 
 ```python
-# In your code, before using lulzprime
-import lulzprime.config as config
-config.ENABLE_LEHMER_PI = True  # Enable Meissel backend
-
-# Now use lulzprime normally
+# Enabled automatically - no configuration needed
 import lulzprime
 result = lulzprime.resolve(500_000)  # Fast with Meissel backend
+
+# Optional: Disable if needed for backward compatibility
+import lulzprime.config as config
+config.ENABLE_LEHMER_PI = False  # Revert to segmented sieve
 ```
 
-**Why opt-in?** Extensive validation complete (169/169 tests pass), but defaults preserve backward compatibility. Enablement is safe and reversible (one-line change).
+**Default change:** v0.2.0 enables ENABLE_LEHMER_PI=True by default. Extensive validation complete (258 tests pass). Safe and reversible.
 
 **Rollback:** Simply set `ENABLE_LEHMER_PI = False` to revert to segmented sieve.
 
@@ -238,7 +238,7 @@ This reframes primes from a brute-force enumeration problem into a navigable spa
 
 ## Maintenance Status
 
-**Current Status:** Completed reference implementation (v0.1.2)
+**Current Status:** Completed reference implementation (v0.2.0)
 
 LULZprime is a **finished artifact**. The implementation has achieved full paper alignment and is production-ready for indices up to 500k.
 
@@ -254,7 +254,7 @@ LULZprime is a **finished artifact**. The implementation has achieved full paper
 - API will not change (backward compatibility preserved)
 - No new features planned (scope is deliberately limited)
 - All 258 tests continue to pass
-- Defaults remain unchanged (ENABLE_LEHMER_PI = False)
+- Meissel-Lehmer backend enabled by default (ENABLE_LEHMER_PI = True)
 
 **Future work (out of scope):**
 - C/Rust port for paper-exceedance performance (10-50× gains possible)
@@ -341,7 +341,7 @@ https://roblemumin.com/library.html
 
 ---
 
-**Status**: v0.1.2 (v0.2.0 in development) - Full paper alignment achieved ✓
+**Status**: v0.2.0 - Full paper alignment achieved ✓
 
 **Test Coverage**: 258 passing (225 core + 15 CLI + 18 JSON export)
 **Validation**: resolve(500k) measured at 73.044s with Meissel backend

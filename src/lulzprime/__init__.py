@@ -20,7 +20,7 @@ Batch API (efficient multi-resolution):
 - between_many(ranges) -> list[list[int]]: Batch range queries
 """
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 # Public API exports
 from .batch import between_many, resolve_many

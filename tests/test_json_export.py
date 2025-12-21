@@ -47,7 +47,7 @@ class TestJSONExportBasics:
 
         # Check meta
         assert json_data["meta"]["library"] == "lulzprime"
-        assert json_data["meta"]["version"] == "0.1.2"
+        assert json_data["meta"]["version"] == "0.2.0"
         assert json_data["meta"]["timestamp"] is None
 
     def test_json_serializable(self):
