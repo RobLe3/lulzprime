@@ -137,7 +137,7 @@ def phi_bruteforce(x: int, a: int, primes_first_a: list[int]) -> int:
     return count
 
 
-def phi(x: int, a: int, primes: list[int], cache: dict | None = None) -> int:
+def phi(x: int, a: int, primes: list[int], cache: dict[tuple[int, int], int] | None = None) -> int:
     """
     Compute φ(x, a): count of integers <= x not divisible by first a primes.
 
@@ -304,8 +304,8 @@ def _pi_meissel(x: int, _depth: int = 0) -> int:
         return pi_small(x)
 
     # Create memoization caches
-    phi_cache = {}
-    pi_cache = {}  # Cache for π(x // p_i) calls in P2
+    phi_cache: dict[tuple[int, int], int] = {}
+    pi_cache: dict[int, int] = {}  # Cache for π(x // p_i) calls in P2
 
     # Compute φ(x, a): integers in [1, x] not divisible by first a primes
     phi_x_a = phi(x, a, primes, phi_cache)
@@ -406,7 +406,7 @@ def lehmer_pi(x: int) -> int:
         return pi_small(x)
 
     # Create memoization cache for φ
-    phi_cache = {}
+    phi_cache: dict[tuple[int, int], int] = {}
 
     # Compute φ(x, a): integers in [1, x] not divisible by first a primes
     phi_x_a = phi(x, a, primes, phi_cache)

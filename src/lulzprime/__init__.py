@@ -20,14 +20,14 @@ Batch API (efficient multi-resolution):
 - between_many(ranges) -> list[list[int]]: Batch range queries
 """
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 # Public API exports
 from .batch import between_many, resolve_many
 from .forecast import forecast
 from .primality import is_prime
 from .resolve import between, next_prime, prev_prime, resolve
-from .simulator import simulate
+from .simulator import simulate, simulation_to_json, simulation_to_json_string
 
 __all__ = [
     "resolve",
@@ -39,4 +39,6 @@ __all__ = [
     "simulate",
     "resolve_many",
     "between_many",
+    "simulation_to_json",
+    "simulation_to_json_string",
 ]

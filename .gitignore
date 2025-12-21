@@ -94,4 +94,6 @@ Thumbs.db
 .editorconfig.bak
 
 # Paper reference (external canonical)
+# Note: docs/paper/ is the canonical location for OMPC paper and must be tracked
 paper/
+!docs/paper/

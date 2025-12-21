@@ -161,7 +161,7 @@ def _pi_legendre(x: int, primes_sqrt: list[int]) -> int:
     a = len(primes_sqrt)
 
     # Memoization cache for φ(x, k) computations
-    memo = {}
+    memo: dict[tuple[int, int], int] = {}
 
     def phi(x_val: int, k: int) -> int:
         """
@@ -426,7 +426,7 @@ def _count_segment_primes(segment_start: int, segment_end: int, small_primes: li
     return count
 
 
-def _phi_memoized(x: int, a: int, primes: list[int], memo: dict) -> int:
+def _phi_memoized(x: int, a: int, primes: list[int], memo: dict[tuple[int, int], int]) -> int:
     """
     Count integers <= x not divisible by first a primes.
 
@@ -472,7 +472,7 @@ def _phi_memoized(x: int, a: int, primes: list[int], memo: dict) -> int:
     return result
 
 
-def _P2(x: int, a: int, primes: list[int], pi_cache: dict) -> int:
+def _P2(x: int, a: int, primes: list[int], pi_cache: dict[int, int]) -> int:
     """
     Compute P2 correction term for Meissel-Lehmer formula.
 
