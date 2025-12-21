@@ -33,6 +33,7 @@ dev = [
     "black>=23.0",
     "mypy>=1.0",
     "ruff>=0.1.0",
+    "pyperf>=2.7.0",
 ]
 docs = [
     "mkdocs>=1.5",
