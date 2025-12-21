@@ -7,6 +7,8 @@ See docs/manual/part_5.md section 5.7 for usage in simulator.
 Canonical reference: https://roblemumin.com/library.html
 """
 
+import random
+
 
 def get_empirical_gap_distribution(
     max_gap: int = 100,
@@ -94,7 +96,7 @@ def tilt_gap_distribution(
 
 def sample_gap(
     distribution: dict[int, float],
-    rng: object | None = None,
+    rng: random.Random | None = None,
 ) -> int:
     """
     Sample a gap from the given distribution using CDF + binary search.

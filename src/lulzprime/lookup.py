@@ -65,6 +65,7 @@ def resolve_internal_with_pi(
         stats.set_forecast(guess)
 
     # Wrap pi_fn to count calls if stats is enabled
+    counted_pi_fn: Callable[[int], int]
     if stats:
 
         def counted_pi_fn(x: int) -> int:

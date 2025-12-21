@@ -12,9 +12,10 @@ Usage:
 
 import argparse
 import sys
+from typing import Any, cast
 
 
-def cmd_resolve(args):
+def cmd_resolve(args: argparse.Namespace) -> int:
     """Execute resolve command."""
     from . import resolve
 
@@ -36,7 +37,7 @@ def cmd_resolve(args):
         return 1
 
 
-def cmd_pi(args):
+def cmd_pi(args: argparse.Namespace) -> int:
     """Execute pi command."""
     from .pi import pi
 
@@ -58,7 +59,7 @@ def cmd_pi(args):
         return 1
 
 
-def cmd_simulate(args):
+def cmd_simulate(args: argparse.Namespace) -> int:
     """Execute simulate command."""
     from . import simulate, simulation_to_json_string
 
@@ -69,9 +70,9 @@ def cmd_simulate(args):
             return 1
 
         # Build kwargs
-        kwargs = {}
-        seed = None
-        anneal_tau = None
+        kwargs: dict[str, Any] = {}
+        seed: int | None = None
+        anneal_tau: float | None = None
 
         if args.seed is not None:
             seed = int(args.seed)
@@ -93,11 +94,14 @@ def cmd_simulate(args):
         if args.json_output:
             # Convert generator to list if needed
             if args.generator:
-                result = list(result)
+                result_list = cast(list[int], list(result))
+            else:
+                # Result is list[int] (no diagnostics in CLI mode)
+                result_list = cast(list[int], result)
 
             # Build JSON
             json_str = simulation_to_json_string(
-                result,
+                result_list,
                 n_steps=n_steps,
                 seed=seed,
                 anneal_tau=anneal_tau,
@@ -134,7 +138,7 @@ def cmd_simulate(args):
         return 1
 
 
-def main():
+def main() -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         prog="lulzprime",
