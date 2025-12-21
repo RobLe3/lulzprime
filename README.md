@@ -69,7 +69,7 @@ LULZprime provides three tiers of guarantees:
 
 **Determinism:** All operations use integer-only math (no floating-point drift). Same inputs always produce identical results across all platforms.
 
-**Validation:** All results validated to 10M indices. Memory constraint < 25 MB verified. Full test coverage (169/169 tests passing).
+**Validation:** All results validated to 10M indices. Memory constraint < 25 MB verified. Full test coverage (258 tests passing).
 
 See `docs/api_contract.md` for complete guarantee specifications.
 
@@ -87,7 +87,39 @@ cd lulzprime
 pip install -e .
 ```
 
-## Quick Start
+## CLI Quickstart
+
+LULZprime provides a command-line interface for common operations:
+
+```bash
+# Resolve: Find the exact nth prime
+python -m lulzprime resolve 100000
+# Output: 1299709
+
+# Pi: Count primes <= x
+python -m lulzprime pi 1000000
+# Output: 78498
+
+# Simulate: Generate pseudo-primes (Tier C: statistical, deterministic with seed)
+python -m lulzprime simulate 1000 --seed 42
+# Output: 1000 pseudo-prime values, one per line
+
+# Simulate with generator mode (low memory, streaming)
+python -m lulzprime simulate 1000000 --seed 42 --generator
+# Streams values without accumulating in memory
+
+# Simulate with annealing (reduced early variance)
+python -m lulzprime simulate 50000 --seed 1337 --anneal-tau 10000
+# Uses dynamic β scheduling for more stable convergence
+
+# Export simulation to JSON
+python -m lulzprime simulate 100 --seed 42 --json output.json
+# Creates output.json with full params, sequence, and metadata
+```
+
+Run `python -m lulzprime --help` for full command reference.
+
+## Python API Quickstart
 
 ```python
 import lulzprime
@@ -109,30 +141,61 @@ print(lulzprime.is_prime(540))  # False
 next_p = lulzprime.next_prime(100)   # 101 (smallest prime >= 100)
 prev_p = lulzprime.prev_prime(100)   # 97 (largest prime <= 100)
 
-# Example 5: Estimate for navigation (Tier C: Estimate only, NOT exact)
-estimate = lulzprime.forecast(100)   # ~540-545 (approximate, not exact)
-# ⚠️  Use resolve() for exact primes, forecast() is for navigation only
+# Example 5: Forecast with refinement (Tier C: Estimate only, NOT exact)
+# Use refinement_level=2 for better accuracy on large indices
+estimate = lulzprime.forecast(100000000, refinement_level=2)
+# More accurate than refinement_level=1, <0.2% error for n >= 10^8
 
 # Example 6: Batch resolution for efficiency (Tier A: Exact, with π(x) caching)
 indices = [1, 10, 100, 50, 25]
 primes = lulzprime.resolve_many(indices)
 # Returns: [2, 29, 541, 229, 97] (order preserved, faster than loop)
+
+# Example 7: Simulation with generator mode (Tier C: statistical)
+# Memory-efficient streaming for large sequences
+for q in lulzprime.simulate(1000000, seed=42, as_generator=True):
+    process(q)  # Stream without storing full list
+
+# Example 8: Simulation with annealing
+# Reduces early transient variance
+seq = lulzprime.simulate(10000, seed=1337, anneal_tau=5000)
+
+# Example 9: Export simulation to JSON
+seq = lulzprime.simulate(100, seed=42)
+json_data = lulzprime.simulation_to_json(seq, n_steps=100, seed=42)
+json_str = lulzprime.simulation_to_json_string(seq, n_steps=100, seed=42)
+# JSON schema: lulzprime.simulation.v0.2
 ```
+
+**Important Note on Simulation (Tier C):**
+
+The `simulate()` function generates pseudo-prime sequences that are **statistically prime-like** but NOT exact primes. Key guarantees:
+- ✓ **Deterministic**: Same seed always produces same sequence
+- ✓ **Statistical correctness**: Reproduces prime gap distributions and density
+- ✗ **NOT identical to resolve()**: simulate(n)[i] may differ from resolve(i)
+- ✗ **NOT exact primes**: Output values may not be prime
+- ✗ **No cross-implementation guarantee**: Different sampling implementations may produce different sequences (even with same seed)
+
+Use `resolve()` for exact primes. Use `simulate()` for testing, validation, and statistical analysis only.
 
 ## Public API
 
 **Core Functions:**
 - **`resolve(index)`** → Returns the exact p_index (Tier A: Exact)
-- **`forecast(index)`** → Returns an analytic estimate for p_index (Tier C: Estimate)
+- **`forecast(index, refinement_level=1)`** → Returns an analytic estimate for p_index (Tier C: Estimate)
 - **`between(x, y)`** → Returns all primes in [x, y] (Tier B: Verified)
 - **`next_prime(n)`** → Returns smallest prime >= n (Tier B: Verified)
 - **`prev_prime(n)`** → Returns largest prime <= n (Tier B: Verified)
 - **`is_prime(n)`** → Primality predicate (Tier B: Verified)
-- **`simulate(...)`** → OMPC simulator for pseudo-prime sequences (optional mode)
+- **`simulate(n_steps, *, seed, diagnostics, as_generator, anneal_tau, ...)`** → OMPC simulator for pseudo-prime sequences (Tier C: statistical)
 
 **Batch API (efficient multi-resolution):**
 - **`resolve_many(indices)`** → Batch resolve with π(x) caching (Tier A: Exact)
 - **`between_many(ranges)`** → Batch range queries (Tier B: Verified)
+
+**JSON Export (simulation results):**
+- **`simulation_to_json(sequence, ...)`** → Returns JSON-serializable dict (schema: lulzprime.simulation.v0.2)
+- **`simulation_to_json_string(sequence, ...)`** → Returns deterministic JSON string
 
 See `docs/api_contract.md` for complete API contracts and guarantee specifications.
 
@@ -160,15 +223,18 @@ This reframes primes from a brute-force enumeration problem into a navigable spa
 
 ## Documentation
 
-- **Quick start**: This README
-- **Performance analysis**: `docs/PAPER_ALIGNMENT_STATUS.md`
-- **Development manual**: `docs/manual/part_0.md` through `part_9.md`
-- **API contracts**: `docs/manual/part_4.md`
-- **Workflows**: `docs/manual/part_5.md`
+- **Quick start**: This README (CLI + Python API examples)
+- **Development manual (current)**: `docs/0.2.0/part_0.md` through `part_9.md`
+- **Development manual (historical)**: `docs/0.1.2/part_0.md` through `part_9.md`
 - **Developer guide**: `docs/autostart.md` and `docs/defaults.md`
 - **Canonical paper**: [OMPC at roblemumin.com](https://roblemumin.com/library.html)
 
-**Note:** Documentation in `docs/manual/`, `docs/autostart.md`, `docs/defaults.md`, and `docs/benchmark_policy.md` reflects historical development process and is archived. The project is now a completed, reference-grade implementation.
+**Key Documentation:**
+- Part 0: Foundation and invariants
+- Part 2: Contracts and guarantees (Tier A/B/C definitions)
+- Part 6: Forecasting and approximation (refinement_level usage)
+- Part 8: Extensions and usability (CLI, JSON export)
+- Part 9: Historical and maintenance (phase tracking)
 
 ## Maintenance Status
 
@@ -187,7 +253,7 @@ LULZprime is a **finished artifact**. The implementation has achieved full paper
 - The library is stable and safe to use in production
 - API will not change (backward compatibility preserved)
 - No new features planned (scope is deliberately limited)
-- All 169 tests continue to pass
+- All 258 tests continue to pass
 - Defaults remain unchanged (ENABLE_LEHMER_PI = False)
 
 **Future work (out of scope):**
@@ -231,12 +297,13 @@ pytest --cov=src/lulzprime --cov-report=html
 ```
 lulzprime/
 ├── src/lulzprime/      # Core deterministic implementation
-├── tests/              # Test suite (169 tests, all passing)
+├── tests/              # Test suite (258 tests, all passing)
 ├── docs/               # Design decisions, validation, release notes
+│   ├── 0.2.0/          # Development manual (v0.2.0, current)
+│   ├── 0.1.2/          # Development manual (v0.1.2, historical)
 │   ├── adr/            # Architecture Decision Records
-│   ├── manual/         # Development manual (historical, archived)
-│   ├── PAPER_ALIGNMENT_STATUS.md  # Performance validation
-│   └── RELEASE_CHECKLIST.md       # PyPI release workflow
+│   ├── autostart.md    # Startup procedure and consultation order
+│   └── defaults.md     # Repository rules and defaults
 ├── benchmarks/         # Manual benchmarks (not run in CI)
 └── experiments/        # One-off validation scripts
 ```
@@ -274,9 +341,9 @@ https://roblemumin.com/library.html
 
 ---
 
-**Status**: v0.1.2 - Full paper alignment achieved ✓
+**Status**: v0.1.2 (v0.2.0 in development) - Full paper alignment achieved ✓
 
-**Test Coverage**: 169/169 passing
+**Test Coverage**: 258 passing (225 core + 15 CLI + 18 JSON export)
 **Validation**: resolve(500k) measured at 73.044s with Meissel backend
 **Memory**: 1.16 MB (< 25 MB constraint)
 **Determinism**: Bit-identical results, integer-only math

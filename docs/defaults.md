@@ -236,10 +236,12 @@ Large artifacts must be generated on demand or stored externally.
 
 - Packaging via `pyproject.toml`
 - `src/` layout mandatory
-- Tests via `pytest` (target: 200+ passing tests)
+- Tests via `pytest` (target: 200+ passing tests, currently 258)
 - Public API contract tests mandatory
 - Performance regressions tracked (benchmarks/results/)
-- Meissel-Lehmer π(x) backend enabled by default (`ENABLE_LEHMER_PI = True`)
+- Meissel-Lehmer π(x) backend enabled by default (`ENABLE_LEHMER_PI = True` in v0.2.0)
+- CLI available via `python -m lulzprime` (Phase 3 Task 1)
+- JSON export support for simulations (Phase 3 Task 2)
 
 No merge is acceptable without passing tests.
 
