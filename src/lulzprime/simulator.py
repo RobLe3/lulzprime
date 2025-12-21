@@ -10,6 +10,7 @@ Output class: Simulation output (non-exact), validated via diagnostics.
 WARNING: Simulation output is NOT exact primes. It is for testing and analysis only.
 """
 
+import json
 import math
 import random
 from typing import Generator
@@ -304,3 +305,130 @@ def _simulate_generator(
 
         # Decay beta (annealing)
         beta *= beta_decay
+
+
+def simulation_to_json(
+    sequence: list[int],
+    *,
+    n_steps: int | None = None,
+    seed: int | None = None,
+    anneal_tau: float | None = None,
+    beta_initial: float = SIMULATOR_BETA_INITIAL,
+    beta_decay: float = SIMULATOR_BETA_DECAY,
+    initial_q: int = SIMULATOR_INITIAL_Q,
+    as_generator: bool = False,
+    diagnostics: list[dict] | None = None,
+) -> dict:
+    """
+    Convert simulation results to JSON-serializable dictionary.
+
+    Creates a structured export of simulation parameters, sequence data,
+    and optional diagnostics for archival, analysis, or sharing.
+
+    Schema: lulzprime.simulation.v0.2
+    - Deterministic structure (sorted keys recommended for JSON string output)
+    - No timestamps by default (breaks determinism)
+    - All values JSON-safe (int, float, bool, None, str, list, dict)
+
+    Args:
+        sequence: List of pseudo-prime integers from simulate()
+        n_steps: Number of steps (inferred from len(sequence) if None)
+        seed: Random seed used (None if non-deterministic)
+        anneal_tau: Annealing time constant (None if not used)
+        beta_initial: Initial inverse temperature
+        beta_decay: Beta decay factor
+        initial_q: Starting value
+        as_generator: Whether generator mode was used
+        diagnostics: Optional list of diagnostic checkpoint dicts
+
+    Returns:
+        JSON-serializable dict with schema:
+        {
+          "schema": "lulzprime.simulation.v0.2",
+          "params": {...},
+          "sequence": [...],
+          "diagnostics": [...] or null,
+          "meta": {...}
+        }
+
+    Example:
+        >>> seq = simulate(100, seed=42)
+        >>> json_data = simulation_to_json(seq, n_steps=100, seed=42)
+        >>> json_data["schema"]
+        'lulzprime.simulation.v0.2'
+        >>> len(json_data["sequence"])
+        100
+    """
+    # Import here to avoid circular dependency
+    from . import __version__
+
+    # Infer n_steps if not provided
+    if n_steps is None:
+        n_steps = len(sequence)
+
+    return {
+        "schema": "lulzprime.simulation.v0.2",
+        "params": {
+            "n_steps": n_steps,
+            "seed": seed,
+            "anneal_tau": anneal_tau,
+            "beta_initial": beta_initial,
+            "beta_decay": beta_decay,
+            "initial_q": initial_q,
+            "as_generator": as_generator,
+        },
+        "sequence": list(sequence),  # Ensure it's a list
+        "diagnostics": diagnostics if diagnostics is not None else None,
+        "meta": {
+            "library": "lulzprime",
+            "version": __version__,
+            "timestamp": None,  # Null for determinism
+        },
+    }
+
+
+def simulation_to_json_string(
+    sequence: list[int],
+    *,
+    n_steps: int | None = None,
+    seed: int | None = None,
+    anneal_tau: float | None = None,
+    beta_initial: float = SIMULATOR_BETA_INITIAL,
+    beta_decay: float = SIMULATOR_BETA_DECAY,
+    initial_q: int = SIMULATOR_INITIAL_Q,
+    as_generator: bool = False,
+    diagnostics: list[dict] | None = None,
+) -> str:
+    """
+    Convert simulation results to deterministic JSON string.
+
+    Convenience wrapper around simulation_to_json() that returns
+    a formatted JSON string with sorted keys for deterministic output.
+
+    Args:
+        Same as simulation_to_json()
+
+    Returns:
+        JSON string with sorted keys and compact formatting
+
+    Example:
+        >>> seq = simulate(10, seed=42)
+        >>> json_str = simulation_to_json_string(seq, n_steps=10, seed=42)
+        >>> import json
+        >>> data = json.loads(json_str)
+        >>> data["schema"]
+        'lulzprime.simulation.v0.2'
+    """
+    data = simulation_to_json(
+        sequence,
+        n_steps=n_steps,
+        seed=seed,
+        anneal_tau=anneal_tau,
+        beta_initial=beta_initial,
+        beta_decay=beta_decay,
+        initial_q=initial_q,
+        as_generator=as_generator,
+        diagnostics=diagnostics,
+    )
+    # Use sort_keys for deterministic output, compact separators
+    return json.dumps(data, separators=(",", ":"), sort_keys=True)

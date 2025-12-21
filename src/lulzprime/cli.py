@@ -60,7 +60,7 @@ def cmd_pi(args):
 
 def cmd_simulate(args):
     """Execute simulate command."""
-    from . import simulate
+    from . import simulate, simulation_to_json_string
 
     try:
         n_steps = int(args.n_steps)
@@ -70,13 +70,18 @@ def cmd_simulate(args):
 
         # Build kwargs
         kwargs = {}
+        seed = None
+        anneal_tau = None
+
         if args.seed is not None:
-            kwargs["seed"] = int(args.seed)
+            seed = int(args.seed)
+            kwargs["seed"] = seed
         if args.anneal_tau is not None:
             tau = float(args.anneal_tau)
             if tau <= 0:
                 print(f"Error: anneal_tau must be > 0, got {tau}", file=sys.stderr)
                 return 1
+            anneal_tau = tau
             kwargs["anneal_tau"] = tau
         if args.generator:
             kwargs["as_generator"] = True
@@ -84,15 +89,40 @@ def cmd_simulate(args):
         # Execute
         result = simulate(n_steps, **kwargs)
 
-        # Output
-        if args.generator:
-            # Stream one value per line
-            for value in result:
-                print(value)
+        # JSON output mode
+        if args.json_output:
+            # Convert generator to list if needed
+            if args.generator:
+                result = list(result)
+
+            # Build JSON
+            json_str = simulation_to_json_string(
+                result,
+                n_steps=n_steps,
+                seed=seed,
+                anneal_tau=anneal_tau,
+                as_generator=args.generator,
+            )
+
+            # Write to file
+            with open(args.json_output, "w") as f:
+                f.write(json_str)
+                f.write("\n")  # Trailing newline
+
+            print(
+                f"Simulation results exported to {args.json_output}",
+                file=sys.stderr,
+            )
         else:
-            # List mode: output all values, one per line
-            for value in result:
-                print(value)
+            # Text output (default)
+            if args.generator:
+                # Stream one value per line
+                for value in result:
+                    print(value)
+            else:
+                # List mode: output all values, one per line
+                for value in result:
+                    print(value)
 
         return 0
 
@@ -144,6 +174,13 @@ def main():
         "--generator",
         action="store_true",
         help="Stream results (low memory mode)",
+    )
+    parser_simulate.add_argument(
+        "--json",
+        dest="json_output",
+        type=str,
+        default=None,
+        help="Export results to JSON file",
     )
 
     args = parser.parse_args()

@@ -262,3 +262,41 @@ class TestSimulateCommand:
 
         assert result.returncode != 0
         assert "Error" in result.stderr
+
+    def test_simulate_json_export(self):
+        """Test simulate with JSON export."""
+        import json
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_file = os.path.join(tmpdir, "output.json")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "lulzprime",
+                    "simulate",
+                    "10",
+                    "--seed",
+                    "42",
+                    "--json",
+                    json_file,
+                ],
+                capture_output=True,
+                text=True,
+                cwd=".",
+                env={"PYTHONPATH": "src"},
+            )
+
+            assert result.returncode == 0
+            assert os.path.exists(json_file)
+
+            # Verify JSON content
+            with open(json_file) as f:
+                data = json.load(f)
+
+            assert data["schema"] == "lulzprime.simulation.v0.2"
+            assert data["params"]["n_steps"] == 10
+            assert data["params"]["seed"] == 42
+            assert len(data["sequence"]) == 10
