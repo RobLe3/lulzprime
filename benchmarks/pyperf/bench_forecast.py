@@ -11,22 +11,41 @@ from lulzprime import forecast
 
 def bench_forecast(loops, n, refinement_level):
     """Benchmark forecast(n, refinement_level) for given upper bound."""
+    # Detect if forecast() supports refinement_level parameter (v0.2.0+)
+    # v0.1.2 only has forecast(index), v0.2.0+ has forecast(index, refinement_level=1)
+    try:
+        # Try v0.2.0+ API first
+        test_result = forecast(n, refinement_level=refinement_level)
+        supports_refinement = True
+    except TypeError:
+        # Fall back to v0.1.2 API (no refinement_level)
+        test_result = forecast(n)
+        supports_refinement = False
+        if refinement_level != 1:
+            # v0.1.2 doesn't support refinement levels, skip this benchmark
+            raise ValueError(
+                f"forecast() in this version doesn't support refinement_level parameter. "
+                f"Requested refinement_level={refinement_level}, but only default is available."
+            )
+
     # Sanity check on first run
     if loops == 1:
-        result = forecast(n, refinement_level=refinement_level)
-        if n == 1000000 and refinement_level == 2:
-            # forecast returns float approximation, should be close to pi(1e6) = 78498
+        if n == 100000:
+            # forecast(100000) approximates the 100,000th prime ≈ 1,299,709
             # Allow reasonable tolerance for approximation
-            if not (70000 < result < 85000):
+            if not (1250000 < test_result < 1350000):
                 raise ValueError(
-                    f"forecast({n}, refinement_level={refinement_level}) = {result}, "
-                    f"expected ~78498"
+                    f"forecast({n}) = {test_result}, expected ~1,299,709"
                 )
 
     # Actual benchmark loop
     t0 = pyperf.perf_counter()
-    for _ in range(loops):
-        forecast(n, refinement_level=refinement_level)
+    if supports_refinement:
+        for _ in range(loops):
+            forecast(n, refinement_level=refinement_level)
+    else:
+        for _ in range(loops):
+            forecast(n)
     return pyperf.perf_counter() - t0
 
 
